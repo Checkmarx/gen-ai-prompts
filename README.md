@@ -13,4 +13,4 @@ The form of the response is:
 **EXPLANATION**: [explanation of the confidence score]
 
 **PROPOSED REMEDIATION**: [code snippet]
-```# ast-sast-ai-remediation
+```
