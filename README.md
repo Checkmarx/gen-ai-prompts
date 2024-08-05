@@ -1,5 +1,7 @@
-# AI Remediation for SAST Results
-This is a golang package that creates a prompt for an AI LLM model to remediate a SAST result. 
+# AI Prompts for various AI use cases accross CxOne
+This repository contains a collection of AI prompt builders for various AI use cases across CxOne.
+## AI Remediation for SAST Results
+This creates a prompt for an AI LLM model to remediate a SAST result. 
 The prompt is created by building code snippets that combine the SAST result nodes with the actual code from the source repository.
 Sending the prompt to the AI model will generate a remediation suggestion that includes: 
 1. confidence score (between 0 and 100) - this score indicates how confident the AI model is about exploitation risk of the result vulnerability
