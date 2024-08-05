@@ -51,7 +51,7 @@ func TestAddNewlinesIfNecessaryAllNewlines(t *testing.T) {
 func getActual(input string, t *testing.T) []string {
 	someText := "some text"
 	response := []string{someText, someText, input}
-	output := addDescriptionForIdentifier(response)
+	output := AddDescriptionForIdentifier(response)
 	for i := 0; i < len(output)-1; i++ {
 		if output[i] != response[i] {
 			t.Errorf("All strings except last expected to stay the same")
