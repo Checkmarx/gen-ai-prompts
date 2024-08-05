@@ -147,7 +147,7 @@ func GetMethodByMethodLine(filename string, lines []string, methodLineNumber, no
 	return methodLines, nil
 }
 
-func addDescriptionForIdentifier(responseContent []string) []string {
+func AddDescriptionForIdentifier(responseContent []string) []string {
 	identifiersDescription := map[string]string{
 		confidence:  confidenceDescription,
 		explanation: explanationDescription,
