@@ -1,10 +1,11 @@
 package main
 
 import (
-	sastchat "ast-ai-prompts/prompts/sast_result_remediation"
 	"flag"
 	"fmt"
 	"os"
+
+	sastchat "github.com/checkmarxDev/ast-ai-prompts/prompts/sast_result_remediation"
 )
 
 const (
