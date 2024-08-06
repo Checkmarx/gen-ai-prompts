@@ -1,11 +1,19 @@
 package main
 
 import (
+	sastchat "ast-ai-prompts/prompts/sast_result_remediation"
 	"flag"
 	"fmt"
 	"os"
+)
 
-	sastchat "github.com/checkmarxDev/ast-ai-prompts/prompts/sast_result_remediation"
+const (
+	SastResult int = iota + 1
+)
+
+const (
+	SastResultType string = "sast-result"
+	promptTypes    string = "sast-result"
 )
 
 const usage = `
@@ -21,47 +29,60 @@ Options:
     -h, --help                    Show help information.
 `
 
+var sourcePath string = ""
+var resultsFile string = ""
+var resultId string = ""
+
+func main() {
+
+	help := false
+	flag.BoolVar(&help, "help", false, "")
+	flag.BoolVar(&help, "h", false, "")
+
+	var promptType string
+	flag.StringVar(&promptType, "p", "sast-result", "")
+	flag.StringVar(&promptType, "prompt", "sast-result", "")
+
+	flag.StringVar(&sourcePath, "s", "", "")
+	flag.StringVar(&sourcePath, "source", "", "")
+
+	flag.StringVar(&resultsFile, "r", "", "")
+	flag.StringVar(&resultsFile, "results", "", "")
+
+	flag.StringVar(&resultId, "ri", "", "")
+	flag.StringVar(&resultId, "result-id", "", "")
+
+	flag.Usage = func() {
+		fmt.Print(usage)
+		os.Exit(1)
+	}
+
+	flag.Parse()
+
+	if help {
+		flag.Usage()
+	}
+
+	if promptType != SastResultType {
+		fmt.Printf("Invalid prompt type '%s'. Must be one of ['%s']\n", promptType, promptTypes)
+		os.Exit(1)
+	}
+
+	buildPrompt(promptType)
+}
+
 func buildPrompt(promptType string) {
 
 	switch promptType {
 	case "sast-result":
 		buildSastResultPrompt()
 	}
-
 }
 
 func buildSastResultPrompt() {
-	help := false
-	flag.BoolVar(&help, "help", false, "")
-	flag.BoolVar(&help, "h", false, "")
-
-	sourcePath := ""
-	flag.StringVar(&sourcePath, "s", "", "")
-	flag.StringVar(&sourcePath, "source", "", "")
-
-	resultsFile := ""
-	flag.StringVar(&resultsFile, "r", "", "")
-	flag.StringVar(&resultsFile, "results", "", "")
-
-	resultId := ""
-	flag.StringVar(&resultId, "ri", "", "")
-	flag.StringVar(&resultId, "result-id", "", "")
-
-	flag.Usage = func() {
-		fmt.Print(usage)
-	}
-
-	flag.Parse()
-
 	if resultsFile == "" && resultId == "" && sourcePath == "" {
-		help = true
-	}
-
-	if help {
 		flag.Usage()
-		os.Exit(1)
 	}
-
 	if resultsFile == "" {
 		fmt.Println("Results file is required for SAST result prompt")
 		os.Exit(1)
@@ -81,6 +102,7 @@ func buildSastResultPrompt() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("System Prompt:\n%s\n", system)
-	fmt.Printf("User Prompt:\n%s\n", user)
+	fmt.Printf("SAST Result Remediation Prompt for result '%s' in results file '%s' with sources '%s'\n\n", resultId, resultsFile, sourcePath)
+	fmt.Printf("System Prompt:\n\n%s\n\n", system)
+	fmt.Printf("User Prompt:\n\n%s\n\n", user)
 }
