@@ -1,3 +1,3 @@
-module github.com/CheckmarxDev/ast-ai-prompts
+module github.com/checkmarxdev/ast-ai-prompts
 
 go 1.21.5
