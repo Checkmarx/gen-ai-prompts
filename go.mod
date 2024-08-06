@@ -1,5 +1,3 @@
-module cli/main.go
+module prompts
 
 go 1.21.5
-
-require github.com/checkmarxDev/ast-ai-prompts v0.0.0-20240805125754-20848173d2fc
