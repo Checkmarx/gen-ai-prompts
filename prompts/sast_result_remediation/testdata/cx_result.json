@@ -1,0 +1,124 @@
+{
+    "results": [
+        {
+            "type": "sast",
+            "label": "sast",
+            "id": "13588507",
+            "similarityId": "-1781066682",
+            "status": "RECURRENT",
+            "state": "TO_VERIFY",
+            "severity": "HIGH",
+            "created": "2024-01-14T16:24:45Z",
+            "firstFoundAt": "2023-11-24T10:27:23Z",
+            "foundAt": "2024-01-14T16:24:45Z",
+            "firstScanId": "12c2e25b-d25a-4321-9ce2-79a4df314d38",
+            "description": "The application\u0026#39;s injectableQuery method executes an SQL query with executeUpdate, at line 63 of /src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson3.java. The application constructs this SQL query by embedding an untrusted string into the query without proper sanitization. The concatenated string is submitted to the database, where it is parsed and executed accordingly.\n\nAn attacker would be able to inject arbitrary syntax and data into the SQL query, by crafting a malicious payload and providing it via the input query; this input is then read by the completed method at line 53 of /src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson3.java. This input then flows through the code, into a query and to the database server - without sanitization.\r\n\r\nThis may enable an SQL Injection attack.\n\n",
+            "descriptionHTML": "\u003cp\u003eThe application\u0026lsquo;s injectableQuery method executes an SQL query with executeUpdate, at line 63 of /src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson3.java. The application constructs this SQL query by embedding an untrusted string into the query without proper sanitization. The concatenated string is submitted to the database, where it is parsed and executed accordingly.\u003c/p\u003e\n\n\u003cp\u003eAn attacker would be able to inject arbitrary syntax and data into the SQL query, by crafting a malicious payload and providing it via the input query; this input is then read by the completed method at line 53 of /src/main/java/org/owasp/webgoat/lessons/sqlinjection/introduction/SqlInjectionLesson3.java. This input then flows through the code, into a query and to the database server - without sanitization.\u003c/p\u003e\n\n\u003cp\u003eThis may enable an SQL Injection attack.\u003c/p\u003e\n",
+            "data": {
+                "queryId": 14517067005933136034,
+                "queryName": "SQL_Injection",
+                "group": "Java_High_Risk",
+                "resultHash": "VcSBJ28P72Dk9jMD+n8RHSZ2O74=",
+                "languageName": "Java",
+                "nodes": [
+                    {
+                        "id": "sw3pPLToofsCI/Ta8s8zNjAW7zM=",
+                        "line": 53,
+                        "name": "query",
+                        "column": 54,
+                        "length": 5,
+                        "method": "completed",
+                        "nodeID": 77482,
+                        "domType": "ParamDecl",
+                        "fileName": "SqlInjectionLesson3.java",
+                        "fullName": "org.owasp.webgoat.lessons.sqlinjection.introduction.SqlInjectionLesson3.completed.query",
+                        "typeName": "String",
+                        "methodLine": 53,
+                        "definitions": "1"
+                    },
+                    {
+                        "id": "u3LOwpvhNfPJLx1TTX00I5WuIC4=",
+                        "line": 54,
+                        "name": "query",
+                        "column": 28,
+                        "length": 5,
+                        "method": "completed",
+                        "nodeID": 77480,
+                        "domType": "UnknownReference",
+                        "fileName": "SqlInjectionLesson3.java",
+                        "fullName": "org.owasp.webgoat.lessons.sqlinjection.introduction.SqlInjectionLesson3.completed.query",
+                        "typeName": "String",
+                        "methodLine": 53,
+                        "definitions": "1"
+                    },
+                    {
+                        "id": "6yrg3ovtvMjrxJN+FSZ9YdS7yWg=",
+                        "line": 57,
+                        "name": "query",
+                        "column": 49,
+                        "length": 5,
+                        "method": "injectableQuery",
+                        "nodeID": 77848,
+                        "domType": "ParamDecl",
+                        "fileName": "SqlInjectionLesson3.java",
+                        "fullName": "org.owasp.webgoat.lessons.sqlinjection.introduction.SqlInjectionLesson3.injectableQuery.query",
+                        "typeName": "String",
+                        "methodLine": 57,
+                            "definitions": "1"
+                    },
+                    {
+                        "id": "BYMt7AYED13dWSU5MoiBVjp05JM=",
+                        "line": 63,
+                        "name": "query",
+                        "column": 33,
+                        "length": 5,
+                        "method": "injectableQuery",
+                        "nodeID": 77582,
+                        "domType": "UnknownReference",
+                        "fileName": "SqlInjectionLesson3.java",
+                        "fullName": "org.owasp.webgoat.lessons.sqlinjection.introduction.SqlInjectionLesson3.injectableQuery.query",
+                        "typeName": "String",
+                        "methodLine": 57,
+                        "definitions": "1"
+                    },
+                    {
+                        "id": "MNl8ok4bsXdGfGi6RnCnsq3qrBw=",
+                        "line": 63,
+                        "name": "executeUpdate",
+                        "column": 32,
+                        "length": 1,
+                        "method": "injectableQuery",
+                        "nodeID": 77578,
+                        "domType": "MethodInvokeExpr",
+                        "fileName": "SqlInjectionLesson3.java",
+                        "fullName": "org.owasp.webgoat.lessons.sqlinjection.introduction.SqlInjectionLesson3.injectableQuery.statement.executeUpdate",
+                        "methodLine": 57,
+                        "definitions": "1"
+                    }
+                ]
+            },
+            "comments": {},
+            "vulnerabilityDetails": {
+                "cweId": 89,
+                "cvss": {},
+                "compliances": [
+                    "OWASP Top 10 2021",
+                    "PCI DSS v3.2.1",
+                    "SANS top 25",
+                    "ASD STIG 4.10",
+                    "FISMA 2014",
+                    "MOIS(KISA) Secure Coding 2021",
+                    "OWASP Top 10 2017",
+                    "CWE top 25",
+                    "NIST SP 800-53",
+                    "OWASP Top 10 API",
+                    "OWASP ASVS",
+                    "OWASP Mobile Top 10 2016",
+                    "OWASP Top 10 2013"
+                ]
+            }
+        }
+    ],
+    "totalCount": 1,
+    "scanID": "bbe35862-deda-4fe6-aa9f-a8f3708d6f88"
+}
