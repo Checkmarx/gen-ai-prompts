@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	sastchat "github.com/CheckmarxDev/ast-ai-prompts/prompts/sast_result_remediation"
+	sastchat "github.com/Checkmarx/gen-ai-prompts/prompts/sast_result_remediation"
 )
 
 const (
