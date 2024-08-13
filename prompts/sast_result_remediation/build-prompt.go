@@ -33,7 +33,7 @@ func BuildPromptForResultId(resultsFile string, resultId string, sourcePath stri
 		prompt.Error = fmt.Errorf("error reading and parsing SAST results file '%s': '%v'", resultsFile, err)
 		return prompt
 	}
-	result, err := GetResultByID(results, resultId)
+	result, err := GetResultByID(results.Results, resultId)
 	if err != nil {
 		prompt.Error = fmt.Errorf("error getting result for result ID '%s': '%v'", resultId, err)
 		return prompt
@@ -65,17 +65,17 @@ func BuildPromptsForLanguageAndQuery(resultsFile, language, query, sourcePath st
 		SourcePath:  sourcePath,
 	}
 	prompts = append(prompts, prompt)
-	results, err := ReadResultsSAST(resultsFile)
+	scanResults, err := ReadResultsSAST(resultsFile)
 	if err != nil {
 		prompt.Error = fmt.Errorf("error reading and parsing SAST results file '%s': '%v'", resultsFile, err)
 		return prompts
 	}
-	results, err = GetResultsForLanguageAndQuery(results, language, query)
+	results, err := GetResultsForLanguageAndQuery(scanResults.Results, language, query)
 	if err != nil {
 		prompt.Error = fmt.Errorf("error reading and parsing SAST results file '%s': '%v'\n", resultsFile, err)
 		return prompts
 	}
-	sources, err := GetSourcesForResults(results.Results, sourcePath)
+	sources, err := GetSourcesForResults(results, sourcePath)
 	if err != nil {
 		prompt.Error = fmt.Errorf("error getting sources for language '%s' and query '%s': '%v'", language, query, err)
 		return prompts

@@ -62,9 +62,9 @@ Your analysis MUST be presented in the following format:
 ` + "\n" + fix + ":" +
 	`fixed_snippet`
 
-func CreatePromptsForResults(results *ScanResults, sources map[string][]string, promptTemplate *SastResultPrompt) []*SastResultPrompt {
+func CreatePromptsForResults(results []*Result, sources map[string][]string, promptTemplate *SastResultPrompt) []*SastResultPrompt {
 	var prompts []*SastResultPrompt
-	for _, result := range results.Results {
+	for _, result := range results {
 		prompt := &SastResultPrompt{
 			ResultsFile: promptTemplate.ResultsFile,
 			SourcePath:  promptTemplate.SourcePath,
