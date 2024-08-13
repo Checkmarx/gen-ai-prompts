@@ -140,8 +140,8 @@ func ReadResultsSAST(filename string) (*ScanResults, error) {
 	return &scanResults, nil
 }
 
-func GetResultByID(results *ScanResults, resultID string) (*Result, error) {
-	for _, result := range results.Results {
+func GetResultByID(results []*Result, resultID string) (*Result, error) {
+	for _, result := range results {
 		if result.ID == resultID {
 			return result, nil
 		}
@@ -149,16 +149,16 @@ func GetResultByID(results *ScanResults, resultID string) (*Result, error) {
 	return &Result{}, fmt.Errorf("result ID %s not found", resultID)
 }
 
-func GetResultsForLanguageAndQuery(results *ScanResults, language, query string) (*ScanResults, error) {
+func GetResultsForLanguageAndQuery(results []*Result, language, query string) ([]*Result, error) {
 	var resultsForQuery []*Result
-	for _, result := range results.Results {
+	for _, result := range results {
 		if (language == "*" || result.Data.LanguageName == language) &&
 			(query == "*" || result.Data.QueryName == query) {
 			resultsForQuery = append(resultsForQuery, result)
 		}
 	}
 	if len(resultsForQuery) == 0 {
-		return &ScanResults{}, fmt.Errorf("no results found for language '%s' and query '%s'", language, query)
+		return resultsForQuery, fmt.Errorf("no results found for language '%s' and query '%s'", language, query)
 	}
-	return &ScanResults{resultsForQuery, len(resultsForQuery), results.ScanID}, nil
+	return resultsForQuery, nil
 }
