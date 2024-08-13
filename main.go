@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	sastchat "github.com/Checkmarx/gen-ai-prompts/prompts/sast_result_remediation"
 )
@@ -16,19 +17,23 @@ const (
 const usage = `
 Create an OpenAI prompt for SAST result remediation
 
-Usage: prompt [-p sast-result] -s <sourcePath> -r <resultsFile> -ri <resultId>
+Usage: prompt [-p sast-result] -s <sourcePath> -r <resultsFile> [options]
 
 Options:
-    -p, --prompt <promptType>     Specify the type of prompt to generate [` + promptTypes + `] (default: sast-result)
-    -s, --source <sourcePath>     Specify where the sources are located.
-    -r, --results <resultsFile>   Specify the SAST results file to use. 
-    -ri, --result-id <result-id>  Specify which result to use. 
-    -h, --help                    Show help information.
+    -p,  --prompt <promptType>    Specify the type of prompt to generate [` + promptTypes + `] (default: sast-result)
+    -s,  --source <sourcePath>    Specify where the sources are located.
+    -r,  --results <resultsFile>  Specify the SAST results file to use. 
+    -ri, --result-id <result-id>  Specify which result to use.
+    -q,  --query <language:query> Specify the query to use. Query must be in the format 'language:query'.
+    -l,  --language <language>    Specify the language to use.
+    -h,  --help                   Show help information.
 `
 
 var sourcePath string = ""
 var resultsFile string = ""
 var resultId string = ""
+var query string = ""
+var language string = ""
 
 func main() {
 
@@ -49,6 +54,12 @@ func main() {
 	flag.StringVar(&resultId, "ri", "", "")
 	flag.StringVar(&resultId, "result-id", "", "")
 
+	flag.StringVar(&query, "q", "", "")
+	flag.StringVar(&query, "query", "", "")
+
+	flag.StringVar(&language, "l", "", "")
+	flag.StringVar(&language, "language", "", "")
+
 	flag.Usage = func() {
 		fmt.Print(usage)
 		os.Exit(1)
@@ -65,18 +76,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	buildPrompt(promptType)
+	buildPrompts(promptType)
 }
 
-func buildPrompt(promptType string) {
+func buildPrompts(promptType string) {
 
 	switch promptType {
 	case "sast-result":
-		buildSastResultPrompt()
+		buildSastResultPrompts()
 	}
 }
 
-func buildSastResultPrompt() {
+func buildSastResultPrompts() {
 	if resultsFile == "" && resultId == "" && sourcePath == "" {
 		flag.Usage()
 	}
@@ -84,22 +95,52 @@ func buildSastResultPrompt() {
 		fmt.Println("Results file is required for SAST result prompt")
 		os.Exit(1)
 	}
-	if resultId == "" {
-		fmt.Println("Result ID is required for SAST result prompt")
-		os.Exit(1)
-	}
 	if sourcePath == "" {
 		fmt.Println("Source path is required for SAST result prompt")
 		os.Exit(1)
 	}
 
-	system, user, err := sastchat.BuildPrompt(resultsFile, resultId, sourcePath)
-	if err != nil {
-		fmt.Printf("Error building SAST result prompt: %v\n", err)
+	if resultId != "" {
+		buildPromptForResult(resultsFile, resultId, sourcePath)
+	} else if query != "" {
+		parts := strings.Split(query, ":")
+		if len(parts) != 2 {
+			fmt.Println("Query must be in the format 'language:query'")
+			os.Exit(1)
+		}
+		language = parts[0]
+		query = parts[1]
+		buildPromptsForLanguageAndQuery(resultsFile, language, query, sourcePath)
+	} else if language != "" {
+		buildPromptsForLanguageAndQuery(resultsFile, language, "*", sourcePath)
+	} else {
+		buildPromptsForLanguageAndQuery(resultsFile, "*", "*", sourcePath)
+	}
+}
+
+func buildPromptsForLanguageAndQuery(resultsFile, language, query, sourcePath string) {
+	var prompts []*sastchat.SastResultPrompt
+	prompts = sastchat.BuildPromptsForLanguageAndQuery(resultsFile, language, query, sourcePath)
+	for _, prompt := range prompts {
+		if prompt.Error != nil {
+			fmt.Printf("Error building SAST result prompt for result ID '%s': %v\n", prompt.ResultId, prompt.Error)
+			continue
+		}
+		fmt.Printf("SAST Result Remediation Prompt for result ID '%s' with Language '%s' and Query '%s' in results file '%s' with sources '%s'\n\n",
+			prompt.ResultId, prompt.Language, prompt.Query, prompt.ResultsFile, prompt.SourcePath)
+		fmt.Printf("System Prompt:\n\n%s\n\n", prompt.System)
+		fmt.Printf("User Prompt:\n\n%s\n\n", prompt.User)
+	}
+}
+
+func buildPromptForResult(resultsFile, resultId, sourcePath string) {
+	prompt := sastchat.BuildPromptForResultId(resultsFile, resultId, sourcePath)
+	if prompt.Error != nil {
+		fmt.Printf("Error building SAST result prompt for result ID '%s': %v\n", resultId, prompt.Error)
 		os.Exit(1)
 	}
-
-	fmt.Printf("SAST Result Remediation Prompt for result '%s' in results file '%s' with sources '%s'\n\n", resultId, resultsFile, sourcePath)
-	fmt.Printf("System Prompt:\n\n%s\n\n", system)
-	fmt.Printf("User Prompt:\n\n%s\n\n", user)
+	fmt.Printf("SAST Result Remediation Prompt for result ID '%s' with Language '%s' and Query '%s' in results file '%s' with sources '%s'\n\n",
+		prompt.ResultId, prompt.Language, prompt.Query, prompt.ResultsFile, prompt.SourcePath)
+	fmt.Printf("System Prompt:\n\n%s\n\n", prompt.System)
+	fmt.Printf("User Prompt:\n\n%s\n\n", prompt.User)
 }

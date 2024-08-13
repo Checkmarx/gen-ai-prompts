@@ -2,6 +2,7 @@ package sast_result_remediation
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -25,7 +26,7 @@ const (
 )
 
 // This constant is used to format the identifiers (confidence, explanation, fix) and their descriptions with HTML tags
-const identifierTitleForamt = "<span style=\"color: regular;\">%s</span><span style=\"color: grey; font-style: italic;\">%s</span>"
+const identifierTitleFormat = "<span style=\"color: regular;\">%s</span><span style=\"color: grey; font-style: italic;\">%s</span>"
 
 const userPromptTemplate = `Checkmarx Static Application Security Testing (SAST) detected the %s vulnerability within the provided %s code snippet. 
 The attack vector is presented by code snippets annotated by comments in the form ` + "`//SAST Node #X: element (element-type)`" + ` where X is 
@@ -61,6 +62,23 @@ Your analysis MUST be presented in the following format:
 ` + "\n" + fix + ":" +
 	`fixed_snippet`
 
+func CreatePromptsForResults(results *ScanResults, sources map[string][]string, promptTemplate *SastResultPrompt) []*SastResultPrompt {
+	var prompts []*SastResultPrompt
+	for _, result := range results.Results {
+		prompt := &SastResultPrompt{
+			ResultsFile: promptTemplate.ResultsFile,
+			SourcePath:  promptTemplate.SourcePath,
+			Language:    result.Data.LanguageName,
+			Query:       result.Data.QueryName,
+			ResultId:    result.ID,
+		}
+		prompt.System = GetSystemPrompt()
+		prompt.User, prompt.Error = CreateUserPrompt(result, sources)
+		prompts = append(prompts, prompt)
+	}
+	return prompts
+}
+
 func GetSystemPrompt() string {
 	return systemPrompt
 }
@@ -76,24 +94,36 @@ func CreateUserPrompt(result *Result, sources map[string][]string) (string, erro
 func createSourceForPrompt(result *Result, sources map[string][]string) (string, error) {
 	var sourcePrompt []string
 	methodsInPrompt := make(map[string][]string)
+	methods := make(map[string]int)
+	methodCount := 0
 	for i := range result.Data.Nodes {
 		node := result.Data.Nodes[i]
 		sourceFilename := strings.ReplaceAll(node.FileName, "\\", "/")
-		methodLines, exists := methodsInPrompt[sourceFilename+":"+node.Method]
+		methodSpec := sourceFilename + ":" + node.Method
+		methodIndex, exists := methods[methodSpec]
+		methodLines, _ := methodsInPrompt[methodSpec]
 		if !exists {
 			m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], node.MethodLine, node.Line, false)
-			methodLines = m
 			if err != nil {
 				return "", fmt.Errorf("error getting method %s: %v", node.Method, err)
 			}
+			methodLines = m
+			methods[methodSpec] = methodCount
+			methodIndex = methods[methodSpec]
+			methodCount++
 		} else if len(methodLines) < node.Line-node.MethodLine+1 {
 			m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], node.MethodLine, node.Line, true)
-			methodLines = m
 			if err != nil {
 				return "", fmt.Errorf("error getting method %s: %v", node.Method, err)
 			}
+			methodLines = m
 		}
+
 		lineInMethod := node.Line - node.MethodLine
+		// adjust in case the node.Line is before node.MethodLine
+		if lineInMethod < 0 {
+			lineInMethod = 0
+		}
 		var edge string
 		if i == 0 {
 			edge = " (input)"
@@ -113,10 +143,18 @@ func createSourceForPrompt(result *Result, sources map[string][]string) (string,
 			}
 		}
 		methodLines[lineInMethod] += fmt.Sprintf("//SAST Node #%d%s: %s (%s)", i, edge, node.Name, nodeType)
-		methodsInPrompt[sourceFilename+":"+node.Method] = methodLines
+		methodIndexStr := fmt.Sprintf("%03d", methodIndex)
+		methodsInPrompt[methodIndexStr+":"+methodSpec] = methodLines
 	}
 
-	for _, methodLines := range methodsInPrompt {
+	var methodKeys []string
+	for k := range methodsInPrompt {
+		methodKeys = append(methodKeys, k)
+	}
+	sort.Strings(methodKeys)
+
+	for _, methodKey := range methodKeys {
+		methodLines := methodsInPrompt[methodKey]
 		methodLines = append(methodLines, "// method continues ...")
 		sourcePrompt = append(sourcePrompt, methodLines...)
 	}
@@ -125,6 +163,9 @@ func createSourceForPrompt(result *Result, sources map[string][]string) (string,
 }
 
 func GetMethodByMethodLine(filename string, lines []string, methodLineNumber, nodeLineNumber int, tagged bool) ([]string, error) {
+	if lines == nil {
+		return nil, fmt.Errorf("source '%s' is irrelevant for analysis", filename)
+	}
 	if methodLineNumber < 1 || methodLineNumber > len(lines) {
 		return nil, fmt.Errorf("method line number %d is out of range", methodLineNumber)
 	}
@@ -133,13 +174,22 @@ func GetMethodByMethodLine(filename string, lines []string, methodLineNumber, no
 		return nil, fmt.Errorf("node line number %d is out of range", nodeLineNumber)
 	}
 
-	if nodeLineNumber < methodLineNumber {
+	// Sometimes the method includes attributes or annotations that are not part of the method declaration
+	// limit these to 5 lines difference
+	if nodeLineNumber < methodLineNumber && methodLineNumber-nodeLineNumber > 5 {
 		return nil, fmt.Errorf("node line number %d is less than method line number %d", nodeLineNumber, methodLineNumber)
 	}
 
-	// Adjust line number to 0-based index for slice access
-	startIndex := methodLineNumber - 1
-	numberOfLines := nodeLineNumber - methodLineNumber + 1
+	// Compute startIndex and numberOfLines
+	var startIndex int
+	var numberOfLines int
+	if nodeLineNumber < methodLineNumber { // in case the node is before the method
+		startIndex = nodeLineNumber - 1 // adjust line number to 0-based index for slice access
+		numberOfLines = methodLineNumber - nodeLineNumber + 1
+	} else {
+		startIndex = methodLineNumber - 1
+		numberOfLines = nodeLineNumber - methodLineNumber + 1
+	}
 	methodLines := lines[startIndex : startIndex+numberOfLines]
 	if !tagged {
 		methodLines[0] += fmt.Sprintf("// %s:%d", filename, methodLineNumber)
@@ -164,5 +214,5 @@ func AddDescriptionForIdentifier(responseContent []string) []string {
 }
 
 func replaceIdentifierTitleIfNeeded(input, identifier, identifierDescription string) string {
-	return strings.Replace(input, identifier, fmt.Sprintf(identifierTitleForamt, identifier, identifierDescription), 1)
+	return strings.Replace(input, identifier, fmt.Sprintf(identifierTitleFormat, identifier, identifierDescription), 1)
 }
