@@ -38,18 +38,22 @@ func BuildPromptForResultId(resultsFile string, resultId string, sourcePath stri
 		prompt.Error = fmt.Errorf("error getting result for result ID '%s': '%v'", resultId, err)
 		return prompt
 	}
-	prompt.Language = result.Data.LanguageName
-	prompt.Query = result.Data.QueryName
+	return BuildPromptFromResult(result, sourcePath, resultsFile)
+}
+
+func BuildPromptFromResult(result *Result, sourcePath string, resultsFile string) *SastResultPrompt {
+	prompt := initPrompt(resultsFile, result.Data.LanguageName, result.Data.QueryName, sourcePath)
+	prompt.ResultId = result.ID
 	sources, err := GetSourcesForResult(result, sourcePath)
 	if err != nil {
-		prompt.Error = fmt.Errorf("error getting sources for result ID '%s': '%v'", resultId, err)
+		prompt.Error = fmt.Errorf("error getting sources for result ID '%s': '%v'", result.ID, err)
 		return prompt
 	}
 
 	prompt.System = GetSystemPrompt()
 	prompt.User, err = CreateUserPrompt(result, sources)
 	if err != nil {
-		prompt.Error = fmt.Errorf("error creating prompt for result ID '%s': '%v'", resultId, err)
+		prompt.Error = fmt.Errorf("error creating prompt for result ID '%s': '%v'", result.ID, err)
 		return prompt
 	}
 
@@ -57,7 +61,7 @@ func BuildPromptForResultId(resultsFile string, resultId string, sourcePath stri
 }
 
 func BuildPromptsForLanguageAndQuery(resultsFile, language, query, sourcePath string) []*SastResultPrompt {
-	prompt := initPrompts(resultsFile, language, query, sourcePath)
+	prompt := initPrompt(resultsFile, language, query, sourcePath)
 	var prompts []*SastResultPrompt
 	prompts = append(prompts, prompt)
 
@@ -70,7 +74,7 @@ func BuildPromptsForLanguageAndQuery(resultsFile, language, query, sourcePath st
 }
 
 func BuildPromptsFromResultsForLanguageAndQuery(results []*Result, language string, query string, sourcePath string, resultsFile string) []*SastResultPrompt {
-	prompt := initPrompts(resultsFile, language, query, sourcePath)
+	prompt := initPrompt(resultsFile, language, query, sourcePath)
 	var prompts []*SastResultPrompt
 	prompts = append(prompts, prompt)
 
@@ -88,7 +92,7 @@ func BuildPromptsFromResultsForLanguageAndQuery(results []*Result, language stri
 	return CreatePromptsForResults(results, sources, prompt)
 }
 
-func initPrompts(resultsFile string, language string, query string, sourcePath string) *SastResultPrompt {
+func initPrompt(resultsFile string, language string, query string, sourcePath string) *SastResultPrompt {
 	return &SastResultPrompt{
 		ResultsFile: resultsFile,
 		Language:    language,
