@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"unicode"
 )
 
 const systemPrompt = `You are the Checkmarx AI Guided Remediation bot who can answer technical questions related to the results of Checkmarx Static Application 
@@ -61,6 +62,13 @@ Your analysis MUST be presented in the following format:
 	`short_text
 ` + "\n" + fix + ":" +
 	`fixed_snippet`
+
+type ParsedResponse struct {
+	Confidence   int
+	Explanation  string
+	Fix          string
+	Introduction string
+}
 
 func CreatePromptsForResults(results []*Result, sources map[string][]string, promptTemplate *SastResultPrompt) []*SastResultPrompt {
 	var prompts []*SastResultPrompt
@@ -195,6 +203,52 @@ func GetMethodByMethodLine(filename string, lines []string, methodLineNumber, no
 		methodLines[0] += fmt.Sprintf("// %s:%d", filename, methodLineNumber)
 	}
 	return methodLines, nil
+}
+
+func ParseResponse(response string) (*ParsedResponse, error) {
+	parsedResponse := &ParsedResponse{}
+	i := strings.Index(response, confidence)
+	if i == -1 {
+		return parsedResponse, fmt.Errorf("confidence not found in response")
+	}
+	parsedResponse.Introduction = response[:i]
+	j := strings.Index(response, explanation)
+	if j == -1 {
+		return parsedResponse, fmt.Errorf("explanation not found in response")
+	}
+	confidenceText := response[i+len(confidence) : j]
+	k := strings.Index(response, fix)
+	if k == -1 {
+		return parsedResponse, fmt.Errorf("fix not found in response")
+	}
+	parsedResponse.Explanation = response[j+len(explanation) : k]
+	parsedResponse.Fix = response[k+len(fix):]
+	confidenceDigits := getDigits(confidenceText)
+	_, err := fmt.Sscanf(confidenceDigits, "%d", &parsedResponse.Confidence)
+	if err != nil {
+		return parsedResponse, fmt.Errorf("error converting confidence text to integer value: %v", err)
+	}
+	return parsedResponse, nil
+}
+
+func getDigits(text string) string {
+	e, s := -1, -1
+	for i, r := range text {
+		if unicode.IsDigit(r) && s == -1 {
+			s = i
+		} else if !unicode.IsDigit(r) && s != -1 {
+			e = i
+			break
+		}
+	}
+	if e == -1 {
+		e = len(text)
+	}
+	if s > 0 && !unicode.IsSpace(rune(text[s-1])) ||
+		e < len(text) && !unicode.IsSpace(rune(text[e])) {
+		return ""
+	}
+	return text[s:e]
 }
 
 func AddDescriptionForIdentifier(responseContent []string) []string {

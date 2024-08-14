@@ -2,6 +2,7 @@ package sast_result_remediation
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -45,6 +46,51 @@ func TestAddNewlinesIfNecessaryAllNewlines(t *testing.T) {
 
 	if output[len(output)-1] != expected {
 		t.Errorf("Expected %q, but got %q", expected, output)
+	}
+}
+
+func TestParseResponse(t *testing.T) {
+	introText := "this is some introductory text"
+	goodConfidenceText := " 35\n"
+	badConfidenceText := "0\nfailed0"
+	confidenceValue := 35
+	explanationText := " this is a short explanation.\n"
+	fixText := "this is a fixed snippet"
+
+	tests := []struct {
+		name     string
+		input    string
+		expected *ParsedResponse
+		err      error
+	}{
+		{"TestParseResponseHappy", introText + confidence + goodConfidenceText + explanation + explanationText + fix + fixText,
+			&ParsedResponse{Introduction: introText, Confidence: confidenceValue, Explanation: explanationText, Fix: fixText}, nil},
+		{"TestParseResponseNoConfidence", introText + goodConfidenceText + explanation + explanationText + fix + fixText,
+			&ParsedResponse{Introduction: "", Confidence: 0, Explanation: "", Fix: ""},
+			fmt.Errorf("confidence not found in response")},
+		{"TestParseResponseNoExplanation", introText + confidence + goodConfidenceText + explanationText + fix + fixText,
+			&ParsedResponse{Introduction: introText, Confidence: 0, Explanation: "", Fix: ""},
+			fmt.Errorf("explanation not found in response")},
+		{"TestParseResponseNoFix", introText + confidence + goodConfidenceText + explanation + explanationText + fixText,
+			&ParsedResponse{Introduction: introText, Confidence: 0, Explanation: "", Fix: ""},
+			fmt.Errorf("fix not found in response")},
+		{"TestParseResponseBadConfidenceValue", introText + confidence + badConfidenceText + explanation + explanationText + fix + fixText,
+			&ParsedResponse{Introduction: introText, Confidence: 0, Explanation: explanationText, Fix: fixText},
+			fmt.Errorf("error converting confidence text to integer value: EOF")},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual, err := ParseResponse(tt.input)
+			if err != nil &&
+				(err.Error() != tt.err.Error()) {
+				t.Errorf("ParseResponse() gotErr = \n%v\nwantErr \n%v\n", err, tt.err)
+			}
+
+			if !reflect.DeepEqual(*actual, *tt.expected) {
+				t.Errorf("Expected %q, but got %q", *tt.expected, *actual)
+			}
+		})
 	}
 }
 
