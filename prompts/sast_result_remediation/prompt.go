@@ -46,10 +46,11 @@ Instructions for confidence score computation:
 2. The confidence score of a vulnerability which can be done by anonymous user is much higher than of an authenticated user.
 3. The confidence score of a vulnerability with a vector starting with a stored input (like from files/db etc) cannot be more than 50. 
 This is also known as a second-order vulnerability
-4. Pay your special attention to the first and last code snippet - whether a specific vulnerability found by Checkmarx SAST can start/occur here, 
+4. The confidence score of a vulnerability where some vector nodes are in test code cannot be more than 50
+5. Pay your special attention to the first and last code snippet - whether a specific vulnerability found by Checkmarx SAST can start/occur here, 
 or it's a false positive.
-5. If you don't find enough evidence about a vulnerability, just lower the score.
-6. If you are not sure, just lower the confidence - we don't want to have false positive results with a high confidence score.
+6. If you don't find enough evidence about a vulnerability, just lower the score.
+7. If you are not sure, just lower the confidence - we don't want to have false positive results with a high confidence score.
  
 Please provide a brief explanation for your confidence score, don't mention all the instruction above.
 
