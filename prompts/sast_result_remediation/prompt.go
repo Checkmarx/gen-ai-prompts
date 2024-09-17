@@ -70,7 +70,7 @@ type ParsedResponse struct {
 	Introduction string
 }
 
-func CreatePromptsForResults(results []*Result, sources map[string][]string, promptTemplate *SastResultPrompt) []*SastResultPrompt {
+func CreatePromptsForResults(results []*Result, cleanSources map[string][]string, promptTemplate *SastResultPrompt) []*SastResultPrompt {
 	var prompts []*SastResultPrompt
 	for _, result := range results {
 		prompt := &SastResultPrompt{
@@ -81,10 +81,19 @@ func CreatePromptsForResults(results []*Result, sources map[string][]string, pro
 			ResultId:    result.ID,
 		}
 		prompt.System = GetSystemPrompt()
+		sources := copyCleanSources(cleanSources)
 		prompt.User, prompt.Error = CreateUserPrompt(result, sources)
 		prompts = append(prompts, prompt)
 	}
 	return prompts
+}
+
+func copyCleanSources(sources map[string][]string) map[string][]string {
+	cleanSources := make(map[string][]string)
+	for k, v := range sources {
+		cleanSources[k] = append([]string(nil), v...)
+	}
+	return cleanSources
 }
 
 func GetSystemPrompt() string {
@@ -198,7 +207,7 @@ func GetMethodByMethodLine(filename string, lines []string, methodLineNumber, no
 		startIndex = methodLineNumber - 1
 		numberOfLines = nodeLineNumber - methodLineNumber + 1
 	}
-	methodLines := append([]string(nil), lines[startIndex:startIndex+numberOfLines]...)
+	methodLines := lines[startIndex : startIndex+numberOfLines]
 	if !tagged {
 		methodLines[0] += fmt.Sprintf("// %s:%d", filename, methodLineNumber)
 	}
