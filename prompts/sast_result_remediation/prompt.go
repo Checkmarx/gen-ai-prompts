@@ -198,7 +198,7 @@ func GetMethodByMethodLine(filename string, lines []string, methodLineNumber, no
 		startIndex = methodLineNumber - 1
 		numberOfLines = nodeLineNumber - methodLineNumber + 1
 	}
-	methodLines := lines[startIndex : startIndex+numberOfLines]
+	methodLines := append([]string(nil), lines[startIndex:startIndex+numberOfLines]...)
 	if !tagged {
 		methodLines[0] += fmt.Sprintf("// %s:%d", filename, methodLineNumber)
 	}
