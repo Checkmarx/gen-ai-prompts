@@ -83,13 +83,13 @@ func BuildPromptsFromResultsForLanguageAndQuery(results []*Result, language stri
 		prompts[0].Error = fmt.Errorf("error reading and parsing SAST results file '%s': '%v'\n", resultsFile, err)
 		return prompts
 	}
-	sources, err := GetSourcesForResults(results, sourcePath)
+	cleanSources, err := GetSourcesForResults(results, sourcePath)
 	if err != nil {
 		prompts[0].Error = fmt.Errorf("error getting sources for language '%s' and query '%s': '%v'", language, query, err)
 		return prompts
 	}
 
-	return CreatePromptsForResults(results, sources, prompt)
+	return CreatePromptsForResults(results, cleanSources, prompt)
 }
 
 func initPrompt(resultsFile string, language string, query string, sourcePath string) *SastResultPrompt {
