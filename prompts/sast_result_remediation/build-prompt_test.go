@@ -99,7 +99,7 @@ func TestBuildPromptsForLanguageAndQuery(t *testing.T) {
 		want []SastResultPrompt
 	}{
 		{"TestBuildPromptsForJavaSqlInjection",
-			args{resultsFile: resultsFile, sourcePath: sourcePath, language: "Java", query: "SQL_Injection", resultId: ""},
+			args{resultsFile: resultsFile, sourcePath: sourcePath, language: "java", query: "sql_Injection", resultId: ""},
 			[]SastResultPrompt{
 				{
 					ResultsFile: resultsFile,
@@ -122,7 +122,7 @@ func TestBuildPromptsForLanguageAndQuery(t *testing.T) {
 			},
 		},
 		{"TestBuildPromptsForJavaScript",
-			args{resultsFile: resultsFile, sourcePath: sourcePath, language: "JavaScript", query: "*", resultId: ""},
+			args{resultsFile: resultsFile, sourcePath: sourcePath, language: "javascript", query: "*", resultId: ""},
 			[]SastResultPrompt{
 				{
 					ResultsFile: resultsFile,
