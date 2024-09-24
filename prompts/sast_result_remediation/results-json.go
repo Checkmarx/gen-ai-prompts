@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 )
 
 // Define the Go structs that match the JSON structure
@@ -152,8 +153,8 @@ func GetResultByID(results []*Result, resultID string) (*Result, error) {
 func GetResultsForLanguageAndQuery(results []*Result, language, query string) ([]*Result, error) {
 	var resultsForQuery []*Result
 	for _, result := range results {
-		if (language == "*" || result.Data.LanguageName == language) &&
-			(query == "*" || result.Data.QueryName == query) {
+		if (language == "*" || strings.EqualFold(result.Data.LanguageName, language)) &&
+			(query == "*" || strings.EqualFold(result.Data.QueryName, query)) {
 			resultsForQuery = append(resultsForQuery, result)
 		}
 	}
