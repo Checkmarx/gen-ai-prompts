@@ -52,6 +52,7 @@ func TestAddNewlinesIfNecessaryAllNewlines(t *testing.T) {
 func TestParseResponse(t *testing.T) {
 	introText := "this is some introductory text"
 	goodConfidenceText := " 35\n"
+	goodConfidenceText3 := " 35**\n"
 	badConfidenceText := "0\nfailed0"
 	confidenceValue := 35
 	explanationText := " this is a short explanation.\n"
@@ -64,6 +65,10 @@ func TestParseResponse(t *testing.T) {
 		err      error
 	}{
 		{"TestParseResponseHappy", introText + confidence + goodConfidenceText + explanation + explanationText + fix + fixText,
+			&ParsedResponse{Introduction: introText, Confidence: confidenceValue, Explanation: explanationText, Fix: fixText}, nil},
+		{"TestParseResponseHappy2", introText + confidence2 + goodConfidenceText + explanation + explanationText + fix + fixText,
+			&ParsedResponse{Introduction: introText, Confidence: confidenceValue, Explanation: explanationText, Fix: fixText}, nil},
+		{"TestParseResponseHappy3", introText + confidence3 + goodConfidenceText3 + explanation + explanationText + fix + fixText,
 			&ParsedResponse{Introduction: introText, Confidence: confidenceValue, Explanation: explanationText, Fix: fixText}, nil},
 		{"TestParseResponseNoConfidence", introText + goodConfidenceText + explanation + explanationText + fix + fixText,
 			&ParsedResponse{Introduction: "", Confidence: 0, Explanation: "", Fix: ""},

@@ -14,7 +14,9 @@ If a question irrelevant to the mentioned source code or SAST result is asked, a
 related to source code or SAST results or SAST Queries'.`
 
 const (
-	confidence  = "**CONFIDENCE:**"
+	confidence  = "**CONFIDENCE:**" // this is the expected confidence identifier
+	confidence2 = "**CONFIDENCE**:" // but this can also be found in the response
+	confidence3 = "**CONFIDENCE:"   // or this, where the confidence value is followed by a '**'
 	explanation = "**EXPLANATION:**"
 	fix         = "**PROPOSED REMEDIATION:**"
 	code        = "```"
@@ -216,16 +218,25 @@ func GetMethodByMethodLine(filename string, lines []string, methodLineNumber, no
 
 func ParseResponse(response string) (*ParsedResponse, error) {
 	parsedResponse := &ParsedResponse{}
-	i := strings.Index(response, confidence)
+	c := confidence
+	i := strings.Index(response, c)
 	if i == -1 {
-		return parsedResponse, fmt.Errorf("confidence not found in response")
+		c = confidence2
+		i = strings.Index(response, c)
+		if i == -1 {
+			c = confidence3
+			i = strings.Index(response, c)
+			if i == -1 {
+				return parsedResponse, fmt.Errorf("confidence not found in response")
+			}
+		}
 	}
 	parsedResponse.Introduction = response[:i]
 	j := strings.Index(response, explanation)
 	if j == -1 {
 		return parsedResponse, fmt.Errorf("explanation not found in response")
 	}
-	confidenceText := response[i+len(confidence) : j]
+	confidenceText := response[i+len(c) : j]
 	k := strings.Index(response, fix)
 	if k == -1 {
 		return parsedResponse, fmt.Errorf("fix not found in response")
@@ -254,7 +265,7 @@ func getDigits(text string) string {
 		e = len(text)
 	}
 	if s > 0 && !unicode.IsSpace(rune(text[s-1])) ||
-		e < len(text) && !unicode.IsSpace(rune(text[e])) {
+		e < len(text) && (!unicode.IsSpace(rune(text[e])) && text[e] != '*') {
 		return ""
 	}
 	return text[s:e]
