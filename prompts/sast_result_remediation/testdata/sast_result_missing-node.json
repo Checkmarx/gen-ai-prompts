@@ -1,0 +1,110 @@
+{
+    "results": [
+        {
+            "type": "sast",
+            "label": "sast",
+            "id": "c1CrCRw4/3/A6q+6zwIhShQIe1I=",
+            "similarityId": "2089971040",
+            "status": "NEW",
+            "state": "TO_VERIFY",
+            "severity": "CRITICAL",
+            "created": "2024-10-27T14:57:53Z",
+            "firstFoundAt": "2024-10-27T14:57:50Z",
+            "foundAt": "2024-10-27T14:57:53Z",
+            "firstScanId": "cf960ef3-8e77-476f-ac2e-fa620383f901",
+            "description": "The method service embeds untrusted data in generated output with println, at line 499 of /test/org/apache/catalina/startup/TomcatBaseTest.java. This untrusted data is embedded into the output without proper sanitization or encoding, enabling an attacker to inject malicious code into the generated web-page.\n\nThe attacker would be able to alter the returned web page by saving malicious data in a data-store ahead of time. The attacker\u0026#39;s modified data is then read from the database by the getRealPath method with getAbsolutePath, at line 309 of /java/org/apache/jasper/servlet/JspCServletContext.java. This untrusted data then flows through the code straight to the output web page, without sanitization. \r\n\r\nThis can enable a Stored Cross-Site Scripting (XSS) attack.\n\n",
+            "descriptionHTML": "\u003cp\u003eThe method service embeds untrusted data in generated output with println, at line 499 of /test/org/apache/catalina/startup/TomcatBaseTest.java. This untrusted data is embedded into the output without proper sanitization or encoding, enabling an attacker to inject malicious code into the generated web-page.\u003c/p\u003e\n\n\u003cp\u003eThe attacker would be able to alter the returned web page by saving malicious data in a data-store ahead of time. The attacker\u0026lsquo;s modified data is then read from the database by the getRealPath method with getAbsolutePath, at line 309 of /java/org/apache/jasper/servlet/JspCServletContext.java. This untrusted data then flows through the code straight to the output web page, without sanitization. \u003c/p\u003e\n\n\u003cp\u003eThis can enable a Stored Cross-Site Scripting (XSS) attack.\u003c/p\u003e\n",
+            "data": {
+                "queryId": 13625251660291496964,
+                "queryName": "Stored_XSS",
+                "group": "Java_Critical_Risk",
+                "resultHash": "c1CrCRw4/3/A6q+6zwIhShQIe1I=",
+                "languageName": "Java",
+                "nodes": [
+                    {
+                        "id": "D2vIv2es9r+nqvyIKZG3baEF69E=",
+                        "line": 309,
+                        "name": "getAbsolutePath",
+                        "column": 37,
+                        "length": 1,
+                        "method": "getRealPath",
+                        "nodeID": 1320912,
+                        "domType": "MethodInvokeExpr",
+                        "fileName": "JspCServletContext.java",
+                        "fullName": "org.apache.jasper.servlet.JspCServletContext.getRealPath.f.getAbsolutePath",
+                        "typeName": "getAbsolutePath",
+                        "methodLine": 296,
+                        "definitions": "0"
+                    },
+                    {
+                        "id": "jxm/DeecLTZD2ZXlSV6bwKfaROA=",
+                        "line": 455,
+                        "name": "getRealPath",
+                        "column": 47,
+                        "length": 1,
+                        "method": "getPathTranslated",
+                        "nodeID": 202581,
+                        "domType": "MethodInvokeExpr",
+                        "fileName": "ApplicationHttpRequest.java",
+                        "fullName": "jakarta.servlet.ServletContext.getRealPath",
+                        "methodLine": 450,
+                        "definitions": "6"
+                    },
+                    {
+                        "id": "aJMiyv5i/FQu9S1zhysREkkikjA=",
+                        "line": 500,
+                        "name": "getPathTranslated",
+                        "column": 50,
+                        "length": 1,
+                        "method": "service",
+                        "nodeID": 2512433,
+                        "domType": "MethodInvokeExpr",
+                        "fileName": "TomcatBaseTest.java",
+                        "fullName": "org.apache.catalina.startup.TomcatBaseTest.SnoopServlet.service.request.getPathTranslated",
+                        "methodLine": 450,
+                        "definitions": "6"
+                    },
+                    {
+                        "id": "pp1Usjn9kH2cYyWchQ6itXZN9pQ=",
+                        "line": 499,
+                        "name": "println",
+                        "column": 24,
+                        "length": 1,
+                        "method": "service",
+                        "nodeID": 2512424,
+                        "domType": "MethodInvokeExpr",
+                        "fileName": "TomcatBaseTest.java",
+                        "fullName": "org.apache.catalina.startup.TomcatBaseTest.SnoopServlet.service.out.println",
+                        "typeName": "println",
+                        "methodLine": 450,
+                        "definitions": "0"
+                    }
+                ]
+            },
+            "comments": {},
+            "vulnerabilityDetails": {
+                "cweId": 79,
+                "cvss": {},
+                "compliances": [
+                    "Top Tier",
+                    "PCI DSS v4.0",
+                    "CWE top 25",
+                    "Base Preset",
+                    "ASD STIG 5.3",
+                    "ASA Premium",
+                    "FISMA 2014",
+                    "OWASP ASVS",
+                    "OWASP Top 10 2017",
+                    "NIST SP 800-53",
+                    "PCI DSS v3.2.1",
+                    "SANS top 25",
+                    "MOIS(KISA) Secure Coding 2021",
+                    "OWASP Top 10 2013",
+                    "OWASP Top 10 2021"
+                ]
+            }
+        }    
+    ],
+    "totalCount": 1,
+    "scanID": "cf960ef3-8e77-476f-ac2e-fa620383f901"
+}

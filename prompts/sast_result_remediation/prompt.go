@@ -120,7 +120,8 @@ func createSourceForPrompt(result *Result, sources map[string][]string) (string,
 		sourceFilename := strings.ReplaceAll(node.FileName, "\\", "/")
 		methodSpec := sourceFilename + ":" + node.Method
 		methodIndex, exists := methods[methodSpec]
-		methodLines, _ := methodsInPrompt[methodSpec]
+		methodIndexStr := fmt.Sprintf("%03d", methodIndex)
+		methodLines, _ := methodsInPrompt[methodIndexStr+":"+methodSpec]
 		if !exists {
 			m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], node.MethodLine, node.Line, false)
 			if err != nil {
@@ -129,6 +130,7 @@ func createSourceForPrompt(result *Result, sources map[string][]string) (string,
 			methodLines = m
 			methods[methodSpec] = methodCount
 			methodIndex = methods[methodSpec]
+			methodIndexStr = fmt.Sprintf("%03d", methodIndex)
 			methodCount++
 		} else if len(methodLines) < node.Line-node.MethodLine+1 {
 			m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], node.MethodLine, node.Line, true)
@@ -162,7 +164,6 @@ func createSourceForPrompt(result *Result, sources map[string][]string) (string,
 			}
 		}
 		methodLines[lineInMethod] += fmt.Sprintf("//SAST Node #%d%s: %s (%s)", i, edge, node.Name, nodeType)
-		methodIndexStr := fmt.Sprintf("%03d", methodIndex)
 		methodsInPrompt[methodIndexStr+":"+methodSpec] = methodLines
 	}
 
