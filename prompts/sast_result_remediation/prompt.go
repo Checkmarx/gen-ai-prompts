@@ -52,6 +52,7 @@ This is also known as a second-order vulnerability
 or it's a false positive.
 5. If you don't find enough evidence about a vulnerability, just lower the score.
 6. If you are not sure, just lower the confidence - we don't want to have false positive results with a high confidence score.
+7. If some of the nodes of the attack vector are within test code, lower the confidence - test code usually does not run in production.
  
 Please provide a brief explanation for your confidence score, don't mention all the instruction above.
 
