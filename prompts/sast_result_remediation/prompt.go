@@ -287,7 +287,8 @@ func getDigits(text string) string {
 		e = len(text)
 	}
 	if s > 0 && !unicode.IsSpace(rune(text[s-1])) ||
-		e < len(text) && (!unicode.IsSpace(rune(text[e])) && text[e] != '*') {
+		e < len(text) && (!unicode.IsSpace(rune(text[e])) && text[e] != '*') ||
+		s == -1 {
 		return ""
 	}
 	return text[s:e]
