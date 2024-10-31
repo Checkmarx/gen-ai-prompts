@@ -63,6 +63,7 @@ func TestParseResponse(t *testing.T) {
 	goodConfidenceText := " 35\n"
 	goodConfidenceText3 := " 35**\n"
 	badConfidenceText := "0\nfailed0"
+	badConfidenceText2 := "N/A"
 	confidenceValue := 35
 	explanationText := " this is a short explanation.\n"
 	fixText := " this is a fixed snippet"
@@ -93,6 +94,9 @@ func TestParseResponse(t *testing.T) {
 			&ParsedResponse{Introduction: introText, Confidence: 0, Explanation: "", Fix: ""},
 			fmt.Errorf("fix not found in response")},
 		{"TestParseResponseBadConfidenceValue", introText + boldConfidence + badConfidenceText + boldExplanation + explanationText + boldFix + fixText,
+			&ParsedResponse{Introduction: introText, Confidence: 0, Explanation: explanationText, Fix: fixText},
+			fmt.Errorf("error converting confidence text to integer value: EOF")},
+		{"TestParseResponseBadConfidenceValue", introText + boldConfidence + badConfidenceText2 + boldExplanation + explanationText + boldFix + fixText,
 			&ParsedResponse{Introduction: introText, Confidence: 0, Explanation: explanationText, Fix: fixText},
 			fmt.Errorf("error converting confidence text to integer value: EOF")},
 	}
