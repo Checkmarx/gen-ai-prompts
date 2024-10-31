@@ -14,12 +14,15 @@ If a question irrelevant to the mentioned source code or SAST result is asked, a
 related to source code or SAST results or SAST Queries'.`
 
 const (
-	confidence  = "**CONFIDENCE:**" // this is the expected confidence identifier
-	confidence2 = "**CONFIDENCE**:" // but this can also be found in the response
-	confidence3 = "**CONFIDENCE:"   // or this, where the confidence value is followed by a '**'
-	explanation = "**EXPLANATION:**"
-	fix         = "**PROPOSED REMEDIATION:**"
-	code        = "```"
+	confidence      = "CONFIDENCE" // this is the expected confidence identifier
+	explanation     = "EXPLANATION"
+	fix             = "PROPOSED REMEDIATION"
+	code            = "```"
+	bold            = "**"
+	bold2           = ":**"
+	boldConfidence  = bold + confidence + bold
+	boldExplanation = bold + explanation + bold
+	boldFix         = bold + fix + bold
 )
 
 const (
@@ -59,12 +62,12 @@ Please provide a brief explanation for your confidence score, don't mention all 
 Next, please provide code that remediates the vulnerability so that a developer can copy paste instead of the snippet above.
  
 Your analysis MUST be presented in the following format:
-` + confidence +
-	`number
-` + "\n" + explanation +
-	`short_text
-` + "\n" + fix + ":" +
-	`fixed_snippet`
+` + bold + confidence + bold +
+	` number
+` + "\n" + bold + explanation + bold +
+	` short_text
+` + "\n" + bold + fix + bold +
+	` fixed_snippet`
 
 type ParsedResponse struct {
 	Confidence   int
@@ -122,7 +125,7 @@ func createSourceForPrompt(result *Result, sources map[string][]string) (string,
 		methodSpec := sourceFilename + ":" + node.Method
 		methodIndex, exists := methods[methodSpec]
 		methodIndexStr := fmt.Sprintf("%03d", methodIndex)
-		methodLines, _ := methodsInPrompt[methodIndexStr+":"+methodSpec]
+		methodLines := methodsInPrompt[methodIndexStr+":"+methodSpec]
 		if !exists {
 			m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], node.MethodLine, node.Line, false)
 			if err != nil {
@@ -220,37 +223,54 @@ func GetMethodByMethodLine(filename string, lines []string, methodLineNumber, no
 
 func ParseResponse(response string) (*ParsedResponse, error) {
 	parsedResponse := &ParsedResponse{}
-	c := confidence
-	i := strings.Index(response, c)
+	c, i := findElement(response, confidence)
 	if i == -1 {
-		c = confidence2
-		i = strings.Index(response, c)
-		if i == -1 {
-			c = confidence3
-			i = strings.Index(response, c)
-			if i == -1 {
-				return parsedResponse, fmt.Errorf("confidence not found in response")
-			}
-		}
+		return parsedResponse, fmt.Errorf("confidence not found in response")
 	}
 	parsedResponse.Introduction = response[:i]
-	j := strings.Index(response, explanation)
+	e, j := findElement(response, explanation)
 	if j == -1 {
 		return parsedResponse, fmt.Errorf("explanation not found in response")
 	}
 	confidenceText := response[i+len(c) : j]
-	k := strings.Index(response, fix)
+	f, k := findElement(response, fix)
 	if k == -1 {
 		return parsedResponse, fmt.Errorf("fix not found in response")
 	}
-	parsedResponse.Explanation = response[j+len(explanation) : k]
-	parsedResponse.Fix = response[k+len(fix):]
+	parsedResponse.Explanation = response[j+len(e) : k]
+	parsedResponse.Fix = response[k+len(f):]
 	confidenceDigits := getDigits(confidenceText)
 	_, err := fmt.Sscanf(confidenceDigits, "%d", &parsedResponse.Confidence)
 	if err != nil {
 		return parsedResponse, fmt.Errorf("error converting confidence text to integer value: %v", err)
 	}
 	return parsedResponse, nil
+}
+
+// findElement finds the first occurrence of the element in the text. It looks for several variations of the element:
+// **X**, **X:**, **X, **x**, **x:**, **x
+func findElement(text, element string) (string, int) {
+	alternatives := []struct {
+		prefix string
+		body   string
+		suffix string
+	}{
+		{bold, strings.ToUpper(element), bold},
+		{bold, strings.ToUpper(element), bold2},
+		{bold, strings.ToUpper(element), ""},
+		{bold, strings.ToLower(element), bold},
+		{bold, strings.ToLower(element), bold2},
+		{bold, strings.ToLower(element), ""},
+	}
+
+	for _, alternative := range alternatives {
+		needle := alternative.prefix + alternative.body + alternative.suffix
+		if i := strings.Index(text, needle); i >= 0 {
+			return needle, i
+		}
+	}
+	return "", -1
+
 }
 
 func getDigits(text string) string {
@@ -275,9 +295,9 @@ func getDigits(text string) string {
 
 func AddDescriptionForIdentifier(responseContent []string) []string {
 	identifiersDescription := map[string]string{
-		confidence:  confidenceDescription,
-		explanation: explanationDescription,
-		fix:         fixDescription,
+		boldConfidence:  confidenceDescription,
+		boldExplanation: explanationDescription,
+		boldFix:         fixDescription,
 	}
 	if len(responseContent) > 0 {
 		for i := 0; i < len(responseContent); i++ {
