@@ -320,6 +320,15 @@ const codeTwoSimilarResults2 = `  public String logRequest(// Ping.java:47
     log.debug(logLine);//SAST Node #4: logLine (StringReference)//SAST Node #5 (output): debug (MethodInvokeExpr)
 // method continues ...`
 
+const jspCode = `    String jndiName = request.getParameter("jndiName");// jndi.jsp:18//SAST Node #0 (input): &#34;&#34;jndiName&#34;&#34; (StringLiteral)//SAST Node #1: getParameter (MethodInvokeExpr)//SAST Node #2: jndiName (Declarator)
+
+    javax.naming.Context initCtx = new javax.naming.InitialContext();
+    javax.naming.Context envCtx = (javax.naming.Context) initCtx.lookup("java:comp/env");
+
+    try {
+        Object obj = envCtx.lookup(jndiName);//SAST Node #3: jndiName (StringReference)//SAST Node #4 (output): lookup (MethodInvokeExpr)
+// method continues ...`
+
 func TestBuildPromptForResults(t *testing.T) {
 	type args struct {
 		resultsFile string
@@ -339,6 +348,8 @@ func TestBuildPromptForResults(t *testing.T) {
 			systemPrompt, userPrompt("Log_Forging", "Java", codeTwoSimilarResults1), nil},
 		{"TestBuildPromptTwoSimilarResults2", args{"testdata/two_similar_results.json", "13893626", "testdata/sources"},
 			systemPrompt, userPrompt("Log_Forging", "Java", codeTwoSimilarResults2), nil},
+		{"TestBuildPromptJspResults", args{"testdata/jsp_result.json", "vuKUhCJ5drCeY6IDB//eBu8wvkk=", "testdata/sources"},
+			systemPrompt, userPrompt("LDAP_Injection", "Java", jspCode), nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

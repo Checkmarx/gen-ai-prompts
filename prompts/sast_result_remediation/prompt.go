@@ -37,7 +37,8 @@ const identifierTitleFormat = "<span style=\"color: regular;\">%s</span><span st
 const userPromptTemplate = `Checkmarx Static Application Security Testing (SAST) detected the %s vulnerability within the provided %s code snippet. 
 The attack vector is presented by code snippets annotated by comments in the form ` + "`//SAST Node #X: element (element-type)`" + ` where X is 
 the node index in the result, ` + "`element`" + ` is the name of the element through which the data flows, and the ` + "`element-type`" + ` is it's type. 
-The first and last nodes are indicated by ` + "`(input ...)` and `(output ...)`" + ` respectively:
+The first and last nodes are indicated by ` + "`(input)` and `(output)`" + ` respectively. Each method definition is annotated by a comment indicating its 
+file path, file name and line where the method begins:
 ` + code + `
 %s
 ` + code + `
@@ -56,6 +57,7 @@ or it's a false positive.
 5. If you don't find enough evidence about a vulnerability, just lower the score.
 6. If you are not sure, just lower the confidence - we don't want to have false positive results with a high confidence score.
 7. If some of the nodes of the attack vector are within test code, lower the confidence - test code usually does not run in production.
+Test code is identified by the file name and/or path name that contains the word 'test'.
  
 Please provide a brief explanation for your confidence score, don't mention all the instruction above.
 
@@ -114,37 +116,53 @@ func CreateUserPrompt(result *Result, sources map[string][]string) (string, erro
 	return fmt.Sprintf(userPromptTemplate, result.Data.QueryName, result.Data.LanguageName, promptSource), nil
 }
 
+// createSourceForPrompt creates the comment-annotated source snippet for the SAST prompt.
+// It iterates over the nodes in the result, collects the source lines from the beginning of the method to the node line,
+// and annotates the lines with the node information. Whenever a new method is encountered, it fetches the method lines.
 func createSourceForPrompt(result *Result, sources map[string][]string) (string, error) {
 	var sourcePrompt []string
+	// methodsInPrompt collects the annotated source lines of all the methods
+	// the key is 'method-index:method-filename:method-name'
 	methodsInPrompt := make(map[string][]string)
-	methods := make(map[string]int)
+	type IndexAndLine struct {
+		Index int
+		Line  int
+	}
+	// methods map holds the index of a method (starting from 0) and the line where it starts
+	// the key is 'method-filename:method-name'
+	methods := make(map[string]*IndexAndLine)
 	methodCount := 0
+	// methodLines holds the source lines of the current method
+	var methodLines []string
+	var methodIndexStr string
 	for i := range result.Data.Nodes {
 		node := result.Data.Nodes[i]
 		sourceFilename := strings.ReplaceAll(node.FileName, "\\", "/")
 		methodSpec := sourceFilename + ":" + node.Method
 		methodIndex, exists := methods[methodSpec]
-		methodIndexStr := fmt.Sprintf("%03d", methodIndex)
-		methodLines := methodsInPrompt[methodIndexStr+":"+methodSpec]
 		if !exists {
 			m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], node.MethodLine, node.Line, false)
 			if err != nil {
 				return "", fmt.Errorf("error getting method %s: %v", node.Method, err)
 			}
 			methodLines = m
-			methods[methodSpec] = methodCount
+			methods[methodSpec] = &IndexAndLine{Index: methodCount, Line: node.MethodLine}
 			methodIndex = methods[methodSpec]
-			methodIndexStr = fmt.Sprintf("%03d", methodIndex)
+			methodIndexStr = fmt.Sprintf("%03d", methodIndex.Index)
 			methodCount++
-		} else if len(methodLines) < node.Line-node.MethodLine+1 {
-			m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], node.MethodLine, node.Line, true)
+		} else if len(methodLines) < node.Line-methodIndex.Line+1 {
+			m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], methodIndex.Line, node.Line, true)
 			if err != nil {
 				return "", fmt.Errorf("error getting method %s: %v", node.Method, err)
 			}
 			methodLines = m
+		} else {
+			methodIndexStr := fmt.Sprintf("%03d", methodIndex.Index)
+			methodLines = methodsInPrompt[methodIndexStr+":"+methodSpec]
+
 		}
 
-		lineInMethod := node.Line - node.MethodLine
+		lineInMethod := node.Line - methodIndex.Line
 		// adjust in case the node.Line is before node.MethodLine
 		if lineInMethod < 0 {
 			lineInMethod = 0
