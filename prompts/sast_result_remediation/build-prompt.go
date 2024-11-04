@@ -41,6 +41,33 @@ func BuildPromptForResultId(resultsFile string, resultId string, sourcePath stri
 	return BuildPromptFromResult(result, sourcePath, resultsFile)
 }
 
+func BuildPromptsForResultsList(resultsFile string, resultsListFile string, sourcePath string) []*SastResultPrompt {
+	var prompt *SastResultPrompt = &SastResultPrompt{
+		ResultsFile: resultsFile,
+		SourcePath:  sourcePath,
+	}
+	var prompts []*SastResultPrompt
+	prompts = append(prompts, prompt)
+
+	scanResults, err := ReadResultsSAST(resultsFile)
+	if err != nil {
+		prompts[0].Error = fmt.Errorf("error reading and parsing SAST results file '%s': '%v'", resultsFile, err)
+		return prompts
+	}
+	// read the resultsListFile
+	results, err := GetResultsByList(scanResults.Results, resultsListFile)
+	if err != nil {
+		prompts[0].Error = fmt.Errorf("error getting results from results list file '%s': '%v'", resultsListFile, err)
+		return prompts
+	}
+	cleanSources, err := GetSourcesForResults(results, sourcePath)
+	if err != nil {
+		prompts[0].Error = fmt.Errorf("error getting sources for results list file '%s': '%v'", resultsListFile, err)
+		return prompts
+	}
+	return CreatePromptsForResults(results, cleanSources, prompt)
+}
+
 func BuildPromptFromResult(result *Result, sourcePath string, resultsFile string) *SastResultPrompt {
 	prompt := initPrompt(resultsFile, result.Data.LanguageName, result.Data.QueryName, sourcePath)
 	prompt.ResultId = result.ID

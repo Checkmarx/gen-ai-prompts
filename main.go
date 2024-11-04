@@ -24,6 +24,7 @@ Options:
     -s,  --source <sourcePath>    Specify where the sources are located.
     -r,  --results <resultsFile>  Specify the SAST results file to use. 
     -ri, --result-id <result-id>  Specify which result to use.
+    -rl, --result-list <listFile> result IDs file to remediate
     -q,  --query <language:query> Specify the query to use. Query must be in the format 'language:query'.
     -l,  --language <language>    Specify the language to use.
     -h,  --help                   Show help information.
@@ -32,6 +33,7 @@ Options:
 var sourcePath string = ""
 var resultsFile string = ""
 var resultId string = ""
+var resultsListFile string = ""
 var query string = ""
 var language string = ""
 
@@ -53,6 +55,9 @@ func main() {
 
 	flag.StringVar(&resultId, "ri", "", "")
 	flag.StringVar(&resultId, "result-id", "", "")
+
+	flag.StringVar(&resultsListFile, "rl", "", "")
+	flag.StringVar(&resultsListFile, "result-list", "", "")
 
 	flag.StringVar(&query, "q", "", "")
 	flag.StringVar(&query, "query", "", "")
@@ -88,7 +93,7 @@ func buildPrompts(promptType string) {
 }
 
 func buildSastResultPrompts() {
-	if resultsFile == "" && resultId == "" && sourcePath == "" {
+	if resultsFile == "" && resultId == "" && sourcePath == "" && resultsListFile == "" {
 		flag.Usage()
 	}
 	if resultsFile == "" {
@@ -102,6 +107,8 @@ func buildSastResultPrompts() {
 
 	if resultId != "" {
 		buildPromptForResult(resultsFile, resultId, sourcePath)
+	} else if resultsListFile != "" {
+		buildPromptsForResultList(resultsFile, resultsListFile, sourcePath)
 	} else if query != "" {
 		parts := strings.Split(query, ":")
 		if len(parts) != 2 {
@@ -143,4 +150,18 @@ func buildPromptForResult(resultsFile, resultId, sourcePath string) {
 		prompt.ResultId, prompt.Language, prompt.Query, prompt.ResultsFile, prompt.SourcePath)
 	fmt.Printf("System Prompt:\n\n%s\n\n", prompt.System)
 	fmt.Printf("User Prompt:\n\n%s\n\n", prompt.User)
+}
+
+func buildPromptsForResultList(resultsFile, resultsListFile, sourcePath string) {
+	prompts := sastchat.BuildPromptsForResultsList(resultsFile, resultsListFile, sourcePath)
+	for _, prompt := range prompts {
+		if prompt.Error != nil {
+			fmt.Printf("Error building SAST result prompt for result ID '%s': %v\n", prompt.ResultId, prompt.Error)
+			continue
+		}
+		fmt.Printf("SAST Result Remediation Prompt for result ID '%s' from results list file '%s' in results file '%s' with sources '%s'\n\n",
+			prompt.ResultId, resultsListFile, prompt.ResultsFile, prompt.SourcePath)
+		fmt.Printf("System Prompt:\n\n%s\n\n", prompt.System)
+		fmt.Printf("User Prompt:\n\n%s\n\n", prompt.User)
+	}
 }
