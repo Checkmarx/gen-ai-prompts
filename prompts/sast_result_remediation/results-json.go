@@ -150,6 +150,24 @@ func GetResultByID(results []*Result, resultID string) (*Result, error) {
 	return &Result{}, fmt.Errorf("result ID %s not found", resultID)
 }
 
+func GetResultsByList(results []*Result, resultsListFile string) ([]*Result, error) {
+	var resultsByList []*Result
+
+	resultIds, err := ReadResultsList(resultsListFile)
+	if err != nil {
+		return resultsByList, fmt.Errorf("error reading results list file '%s': '%v'", resultsListFile, err)
+	}
+
+	for _, resultId := range resultIds {
+		result, err := GetResultByID(results, resultId)
+		if err != nil {
+			return nil, err
+		}
+		resultsByList = append(resultsByList, result)
+	}
+	return resultsByList, nil
+}
+
 func GetResultsForLanguageAndQuery(results []*Result, language, query string) ([]*Result, error) {
 	var resultsForQuery []*Result
 	for _, result := range results {
@@ -162,4 +180,19 @@ func GetResultsForLanguageAndQuery(results []*Result, language, query string) ([
 		return resultsForQuery, fmt.Errorf("no results found for language '%s' and query '%s'", language, query)
 	}
 	return resultsForQuery, nil
+}
+
+func ReadResultsList(listFile string) ([]string, error) {
+	content, err := os.ReadFile(listFile)
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.Split(string(content), "\n")
+	var results []string
+	for _, line := range lines {
+		if line != "" {
+			results = append(results, strings.Trim(line, " "))
+		}
+	}
+	return results, nil
 }

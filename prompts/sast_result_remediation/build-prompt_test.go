@@ -81,8 +81,9 @@ func TestBuildPrompt(t *testing.T) {
 }
 
 const (
-	resultsFile = "testdata/cx_result.json"
-	sourcePath  = "testdata/sources"
+	resultsFile     = "testdata/cx_result.json"
+	sourcePath      = "testdata/sources"
+	resultsListFile = "testdata/results_list.txt"
 )
 
 func TestBuildPromptsForLanguageAndQuery(t *testing.T) {
@@ -148,6 +149,65 @@ func TestBuildPromptsForLanguageAndQuery(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := BuildPromptsForLanguageAndQuery(tt.args.resultsFile, tt.args.language, tt.args.query, tt.args.sourcePath)
+			if len(got) != len(tt.want) {
+				t.Errorf("BuildPromptsForLanguageAndQuery() got = %v, want %v", got, tt.want)
+				return
+			}
+			for i := range got {
+				if (got[i].Error != nil) &&
+					got[i].Error.Error() != tt.want[i].Error.Error() {
+					t.Errorf("BuildPromptsForLanguageAndQuery() gotErr = \n%v\nwantErr \n%v\n", got[i].Error, tt.want[i].Error)
+					return
+				}
+				if got[i].System != tt.want[i].System {
+					t.Errorf("BuildPromptsForLanguageAndQuery() gotSystem = \n%v\n, want \n%v\n", got[i].System, tt.want[i].System)
+				}
+				if got[i].User != tt.want[i].User {
+					t.Errorf("BuildPromptsForLanguageAndQuery() gotUser = \n%v\n, want \n%v\n", got[i].User, tt.want[i].User)
+				}
+			}
+		})
+	}
+}
+
+func TestBuildPromptsForResultsList(t *testing.T) {
+	type args struct {
+		resultsFile     string
+		sourcePath      string
+		resultsListFile string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []SastResultPrompt
+	}{
+		{"TestBuildPromptsForResultsList",
+			args{resultsFile: resultsFile, sourcePath: sourcePath, resultsListFile: resultsListFile},
+			[]SastResultPrompt{
+				{
+					ResultsFile: resultsFile,
+					SourcePath:  sourcePath,
+					Language:    "Java",
+					Query:       "SQL_Injection",
+					System:      systemPrompt,
+					User:        userPrompt("SQL_Injection", "Java", userPromptCode),
+					Error:       nil,
+				},
+				{
+					ResultsFile: resultsFile,
+					SourcePath:  sourcePath,
+					Language:    "Java",
+					Query:       "SQL_Injection",
+					System:      systemPrompt,
+					User:        userPrompt("SQL_Injection", "Java", userPromptCode2),
+					Error:       nil,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := BuildPromptsForResultsList(tt.args.resultsFile, tt.args.resultsListFile, tt.args.sourcePath)
 			if len(got) != len(tt.want) {
 				t.Errorf("BuildPromptsForLanguageAndQuery() got = %v, want %v", got, tt.want)
 				return
