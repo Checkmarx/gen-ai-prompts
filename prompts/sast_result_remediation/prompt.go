@@ -52,12 +52,12 @@ Instructions for confidence score computation:
 2. The confidence score of a vulnerability which can be done by anonymous user is much higher than of an authenticated user.
 3. The confidence score of a vulnerability with a vector starting with a stored input (like from files/db etc) cannot be more than 50. 
 This is also known as a second-order vulnerability
-4. Pay your special attention to the first and last code snippet - whether a specific vulnerability found by Checkmarx SAST can start/occur here, 
+4. The confidence score of a vulnerability with a vector containing nodes in test code, cannot be more than 50 since it does not run in production.
+Test code is identified either by the file name containing the word 'test' or the file path containing the word 'test'.
+5. Pay your special attention to the first and last code snippet - whether a specific vulnerability found by Checkmarx SAST can start/occur here, 
 or it's a false positive.
-5. If you don't find enough evidence about a vulnerability, just lower the score.
-6. If you are not sure, just lower the confidence - we don't want to have false positive results with a high confidence score.
-7. If some of the nodes of the attack vector are within test code, lower the confidence - test code usually does not run in production.
-Test code is identified by the file name and/or path name that contains the word 'test'.
+6. If you don't find enough evidence about a vulnerability, just lower the score.
+7. If you are not sure, just lower the confidence - we don't want to have false positive results with a high confidence score.
  
 Please provide a brief explanation for your confidence score, don't mention all the instruction above.
 
@@ -284,9 +284,39 @@ func findElement(text, element string) (string, int) {
 		if i := strings.Index(text, needle); i >= 0 {
 			return needle, i
 		}
+		trimmedNeedle := strings.ReplaceAll(needle, " ", "")
+		if trimmedNeedle != needle {
+			e, i := findWithExtraSpaces(text, needle)
+			if i != -1 {
+				return e, i
+			}
+		}
 	}
 	return "", -1
 
+}
+
+// findWithExtraSpaces finds the first occurrence of the needle in the text given that the needle has one internal space.
+// It looks for the needle with multiple spaces between the words.
+func findWithExtraSpaces(text string, needle string) (string, int) {
+	// split the needle into words
+	words := strings.Split(needle, " ")
+	if len(words) != 2 {
+		return "", -1
+	}
+	// find the first word
+	i := strings.Index(text, words[0])
+	if i == -1 {
+		return "", -1
+	}
+	// find the second word
+	j := strings.Index(text[i+len(words[0]):], words[1])
+	if j == -1 {
+		return "", -1
+	}
+	spaces := strings.Repeat(" ", j)
+	needle = words[0] + spaces + words[1]
+	return needle, i
 }
 
 func getDigits(text string) string {
