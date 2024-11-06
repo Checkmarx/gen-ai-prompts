@@ -20,6 +20,7 @@ const (
 	boldConfidence3  = bold + confidence
 	boldExplanation3 = bold + explanation
 	boldFix3         = bold + fix
+	boldFix4         = bold + "PROPOSED  REMEDIATION" + bold2
 )
 
 func getExpectedOutput(confidenceNumber, explanationText, fixText string) string {
@@ -83,6 +84,8 @@ func TestParseResponse(t *testing.T) {
 		{"TestParseResponseHappy4", introText + boldConfidence + goodConfidenceText + boldExplanation2 + explanationText + boldFix2 + fixText,
 			&ParsedResponse{Introduction: introText, Confidence: confidenceValue, Explanation: explanationText, Fix: fixText}, nil},
 		{"TestParseResponseHappy5", introText + boldConfidence + goodConfidenceText + boldExplanation3 + explanationText + boldFix3 + fixText,
+			&ParsedResponse{Introduction: introText, Confidence: confidenceValue, Explanation: explanationText, Fix: fixText}, nil},
+		{"TestParseResponseHappy6", introText + boldConfidence + goodConfidenceText + boldExplanation3 + explanationText + boldFix4 + fixText,
 			&ParsedResponse{Introduction: introText, Confidence: confidenceValue, Explanation: explanationText, Fix: fixText}, nil},
 		{"TestParseResponseNoConfidence", introText + goodConfidenceText + boldExplanation + explanationText + boldFix + fixText,
 			&ParsedResponse{Introduction: "", Confidence: 0, Explanation: "", Fix: ""},

@@ -320,6 +320,50 @@ const codeTwoSimilarResults2 = `  public String logRequest(// Ping.java:47
     log.debug(logLine);//SAST Node #4: logLine (StringReference)//SAST Node #5 (output): debug (MethodInvokeExpr)
 // method continues ...`
 
+const jspCode = `    String jndiName = request.getParameter("jndiName");// jndi.jsp:18//SAST Node #0 (input): &#34;&#34;jndiName&#34;&#34; (StringLiteral)//SAST Node #1: getParameter (MethodInvokeExpr)//SAST Node #2: jndiName (Declarator)
+
+    javax.naming.Context initCtx = new javax.naming.InitialContext();
+    javax.naming.Context envCtx = (javax.naming.Context) initCtx.lookup("java:comp/env");
+
+    try {
+        Object obj = envCtx.lookup(jndiName);//SAST Node #3: jndiName (StringReference)//SAST Node #4 (output): lookup (MethodInvokeExpr)
+// method continues ...`
+
+const jspAndJavaCode = `<jsp:setProperty name="numguess" property="*"/>// numguess.jsp:25//SAST Node #0 (input): getParameterMap (MethodInvokeExpr)//SAST Node #1: set (MethodInvokeExpr)//SAST Node #2: numguess (NumberGuessBeanReference)
+
+<html>
+<head><title>Number Guess</title></head>
+<body bgcolor="white">
+<font size=4>
+
+<% if (numguess.getSuccess()) { %>//SAST Node #3: numguess (NumberGuessBeanReference)
+
+  Congratulations!  You got it.
+  And after just <%= numguess.getNumGuesses() %> tries.<p>
+
+  <% numguess.reset(); %>
+
+  Care to <a href="numguess.jsp">try again</a>?
+
+<% } else if (numguess.getNumGuesses() == 0) { %>//SAST Node #4: numguess (NumberGuessBeanReference)
+
+  Welcome to the Number Guess game.<p>
+
+  I'm thinking of a number between 1 and 100.<p>
+
+  <form method=get>
+  What's your guess? <input type=text name=guess>
+  <input type=submit value="Submit">
+  </form>
+
+<% } else { %>
+
+  Good guess, but nope.  Try <b><%= numguess.getHint() %></b>.//SAST Node #5: numguess (NumberGuessBeanReference)//SAST Node #7 (output): getHint (MethodInvokeExpr)
+// method continues ...
+    public String getHint() {// NumberGuessBean.java:48
+        return "" + hint;//SAST Node #6: hint (StringReference)
+// method continues ...`
+
 func TestBuildPromptForResults(t *testing.T) {
 	type args struct {
 		resultsFile string
@@ -339,6 +383,10 @@ func TestBuildPromptForResults(t *testing.T) {
 			systemPrompt, userPrompt("Log_Forging", "Java", codeTwoSimilarResults1), nil},
 		{"TestBuildPromptTwoSimilarResults2", args{"testdata/two_similar_results.json", "13893626", "testdata/sources"},
 			systemPrompt, userPrompt("Log_Forging", "Java", codeTwoSimilarResults2), nil},
+		{"TestBuildPromptJspResult", args{"testdata/jsp_result.json", "vuKUhCJ5drCeY6IDB//eBu8wvkk=", "testdata/sources"},
+			systemPrompt, userPrompt("LDAP_Injection", "Java", jspCode), nil},
+		{"TestBuildPromptJspAndJavaResult", args{"testdata/jsp_and_java_result.json", "XrM9Lk/bjJHxLOcn4XETGHJ1ko0=", "testdata/sources"},
+			systemPrompt, userPrompt("Reflected_XSS_All_Clients", "Java", jspAndJavaCode), nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

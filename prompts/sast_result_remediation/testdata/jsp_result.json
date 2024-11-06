@@ -1,0 +1,124 @@
+{
+    "results": [
+        {
+            "type": "sast",
+            "label": "sast",
+            "id": "vuKUhCJ5drCeY6IDB//eBu8wvkk=",
+            "similarityId": "572812016",
+            "status": "NEW",
+            "state": "TO_VERIFY",
+            "severity": "HIGH",
+            "created": "2024-10-27T14:57:49Z",
+            "firstFoundAt": "2024-10-27T14:57:48Z",
+            "foundAt": "2024-10-27T14:57:49Z",
+            "firstScanId": "cf960ef3-8e77-476f-ac2e-fa620383f901",
+            "description": "The application\u0026#39;s jndi method constructs an LDAP query, at line 24 of /test/webapp-fragments/jndi.jsp, embedding an untrusted string lookup into the query without proper sanitization. The constructed string is used to query an LDAP server, for authentication or data retrieval. \r\n\r\nThis may enable an attacker to modify the LDAP parameters, leading to an LDAP Injection attack.\n\nAn attacker may be able to inject arbitrary data into the LDAP query, by altering the user input \u0026#34;\u0026#34;jndiName\u0026#34;\u0026#34;, which is read by the jndi method, at line 18 of /test/webapp-fragments/jndi.jsp. This input then flows through the code to the LDAP server, without sanitization.\n\n",
+            "descriptionHTML": "\u003cp\u003eThe application\u0026lsquo;s jndi method constructs an LDAP query, at line 24 of /test/webapp-fragments/jndi.jsp, embedding an untrusted string lookup into the query without proper sanitization. The constructed string is used to query an LDAP server, for authentication or data retrieval. \u003c/p\u003e\n\n\u003cp\u003eThis may enable an attacker to modify the LDAP parameters, leading to an LDAP Injection attack.\u003c/p\u003e\n\n\u003cp\u003eAn attacker may be able to inject arbitrary data into the LDAP query, by altering the user input \u0026ldquo;\u0026rdquo;jndiName\u0026ldquo;\u0026rdquo;, which is read by the jndi method, at line 18 of /test/webapp-fragments/jndi.jsp. This input then flows through the code to the LDAP server, without sanitization.\u003c/p\u003e\n",
+            "data": {
+                "queryId": 3178558030157261902,
+                "queryName": "LDAP_Injection",
+                "group": "Java_High_Risk",
+                "resultHash": "vuKUhCJ5drCeY6IDB//eBu8wvkk=",
+                "languageName": "Java",
+                "nodes": [
+                    {
+                        "id": "NOZD1RLJj+aA39DovsknSpxeL+c=",
+                        "line": 18,
+                        "name": "\u0026#34;\u0026#34;jndiName\u0026#34;\u0026#34;",
+                        "column": 44,
+                        "length": 10,
+                        "method": "jndi",
+                        "nodeID": 3223746,
+                        "domType": "StringLiteral",
+                        "fileName": "jndi.jsp",
+                        "fullName": "\u0026#34;\u0026#34;jndiName\u0026#34;\u0026#34;",
+                        "typeName": "StringLiteral",
+                        "methodLine": 18,
+                        "definitions": "-1"
+                    },
+                    {
+                        "id": "YoSYmWINGeBGcV5pJzRdGzjCoM0=",
+                        "line": 18,
+                        "name": "getParameter",
+                        "column": 43,
+                        "length": 1,
+                        "method": "jndi",
+                        "nodeID": 3223742,
+                        "domType": "MethodInvokeExpr",
+                        "fileName": "jndi.jsp",
+                        "fullName": "cxPkg4da44929.jsp_jndi.jndi.request.getParameter",
+                        "typeName": "getParameter",
+                        "methodLine": 18,
+                        "definitions": "0"
+                    },
+                    {
+                        "id": "HmgHg8eTB8vFTSMzSl6g7crd8Uk=",
+                        "line": 18,
+                        "name": "jndiName",
+                        "column": 12,
+                        "length": 8,
+                        "method": "jndi",
+                        "nodeID": 3223738,
+                        "domType": "Declarator",
+                        "fileName": "jndi.jsp",
+                        "fullName": "cxPkg4da44929.jsp_jndi.jndi.jndiName",
+                        "typeName": "String",
+                        "methodLine": 18,
+                        "definitions": "1"
+                    },
+                    {
+                        "id": "krERn2T1aQAHCDl212GYJFoD8Zc=",
+                        "line": 24,
+                        "name": "jndiName",
+                        "column": 36,
+                        "length": 8,
+                        "method": "jndi",
+                        "nodeID": 3223798,
+                        "domType": "UnknownReference",
+                        "fileName": "jndi.jsp",
+                        "fullName": "cxPkg4da44929.jsp_jndi.jndi.jndiName",
+                        "typeName": "String",
+                        "methodLine": 24,
+                        "definitions": "1"
+                    },
+                    {
+                        "id": "I/QzY2IBeqG61yvKiedounS7fNQ=",
+                        "line": 24,
+                        "name": "lookup",
+                        "column": 35,
+                        "length": 1,
+                        "method": "jndi",
+                        "nodeID": 3223794,
+                        "domType": "MethodInvokeExpr",
+                        "fileName": "jndi.jsp",
+                        "fullName": "cxPkg4da44929.jsp_jndi.jndi.envCtx.lookup",
+                        "typeName": "lookup",
+                        "methodLine": 24,
+                        "definitions": "0"
+                    }
+                ]
+            },
+            "comments": {},
+            "vulnerabilityDetails": {
+                "cweId": 90,
+                "cvss": {},
+                "compliances": [
+                    "Top Tier",
+                    "FISMA 2014",
+                    "MOIS(KISA) Secure Coding 2021",
+                    "OWASP Top 10 2021",
+                    "ASA Premium",
+                    "OWASP Top 10 API",
+                    "PCI DSS v3.2.1",
+                    "PCI DSS v4.0",
+                    "Base Preset",
+                    "NIST SP 800-53",
+                    "ASD STIG 5.3",
+                    "OWASP ASVS"
+                ]
+            }
+        }
+    ],
+    "totalCount": 1,
+    "scanID": "cf960ef3-8e77-476f-ac2e-fa620383f901"
+}
