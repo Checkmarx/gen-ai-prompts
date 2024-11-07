@@ -148,18 +148,20 @@ func createSourceForPrompt(result *Result, sources map[string][]string) (string,
 			methodLines = m
 			methods[methodSpec] = &IndexAndLine{Index: methodCount, Line: node.MethodLine}
 			methodIndex = methods[methodSpec]
+			methodIndexStr = fmt.Sprintf("%03d", methodIndex.Index)
 			methodCount++
 		} else if len(methodLines) < node.Line-methodIndex.Line+1 {
+			methodIndexStr = fmt.Sprintf("%03d", methodIndex.Index)
 			m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], methodIndex.Line, node.Line, true)
 			if err != nil {
 				return "", fmt.Errorf("error getting method %s: %v", node.Method, err)
 			}
 			methodLines = m
 		} else {
+			methodIndexStr = fmt.Sprintf("%03d", methodIndex.Index)
 			methodLines = methodsInPrompt[methodIndexStr+":"+methodSpec]
 		}
 
-		methodIndexStr = fmt.Sprintf("%03d", methodIndex.Index)
 		lineInMethod := node.Line - methodIndex.Line
 		// adjust in case the node.Line is before node.MethodLine
 		if lineInMethod < 0 {
