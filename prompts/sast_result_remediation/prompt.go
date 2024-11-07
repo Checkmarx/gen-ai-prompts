@@ -273,24 +273,21 @@ func findElement(text, element string) (string, int) {
 		body   string
 		suffix string
 	}{
-		{bold, strings.ToUpper(element), bold},
-		{bold, strings.ToUpper(element), bold2},
-		{bold, strings.ToUpper(element), ""},
-		{"", strings.ToUpper(element), ""},
 		{bold, strings.ToLower(element), bold},
 		{bold, strings.ToLower(element), bold2},
 		{bold, strings.ToLower(element), ""},
 		{"", strings.ToLower(element), ""},
 	}
 
+	lowerText := strings.ToLower(text)
 	for _, alternative := range alternatives {
 		needle := alternative.prefix + alternative.body + alternative.suffix
-		if i := strings.Index(text, needle); i >= 0 {
+		if i := strings.Index(lowerText, needle); i >= 0 {
 			return needle, i
 		}
 		trimmedNeedle := strings.ReplaceAll(needle, " ", "")
 		if trimmedNeedle != needle {
-			e, i := findWithExtraSpaces(text, needle)
+			e, i := findWithExtraSpaces(lowerText, needle)
 			if i != -1 {
 				return e, i
 			}
