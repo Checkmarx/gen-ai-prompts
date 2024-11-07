@@ -140,7 +140,7 @@ func createSourceForPrompt(result *Result, sources map[string][]string) (string,
 		sourceFilename := strings.ReplaceAll(node.FileName, "\\", "/")
 		methodSpec := sourceFilename + ":" + node.Method
 		methodIndex, exists := methods[methodSpec]
-		if !exists {
+		if !exists { // first time this method is encountered in the result
 			m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], node.MethodLine, node.Line, false)
 			if err != nil {
 				return "", fmt.Errorf("error getting method %s: %v", node.Method, err)
@@ -150,16 +150,16 @@ func createSourceForPrompt(result *Result, sources map[string][]string) (string,
 			methodIndex = methods[methodSpec]
 			methodIndexStr = fmt.Sprintf("%03d", methodIndex.Index)
 			methodCount++
-		} else if len(methodLines) < node.Line-methodIndex.Line+1 {
-			methodIndexStr = fmt.Sprintf("%03d", methodIndex.Index)
-			m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], methodIndex.Line, node.Line, true)
-			if err != nil {
-				return "", fmt.Errorf("error getting method %s: %v", node.Method, err)
-			}
-			methodLines = m
 		} else {
 			methodIndexStr = fmt.Sprintf("%03d", methodIndex.Index)
 			methodLines = methodsInPrompt[methodIndexStr+":"+methodSpec]
+			if len(methodLines) < node.Line-methodIndex.Line+1 { // need to add more lines to the method
+				m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], methodIndex.Line, node.Line, true)
+				if err != nil {
+					return "", fmt.Errorf("error getting method %s: %v", node.Method, err)
+				}
+				methodLines = m
+			}
 		}
 
 		lineInMethod := node.Line - methodIndex.Line
