@@ -21,6 +21,10 @@ const (
 	boldExplanation3 = bold + explanation
 	boldFix3         = bold + fix
 	boldFix4         = bold + "PROPOSED  REMEDIATION" + bold2
+	plainConfidence  = confidence
+	plainExplanation = explanation
+	plainFix         = fix
+	header           = "##"
 )
 
 func getExpectedOutput(confidenceNumber, explanationText, fixText string) string {
@@ -87,6 +91,8 @@ func TestParseResponse(t *testing.T) {
 			&ParsedResponse{Introduction: introText, Confidence: confidenceValue, Explanation: explanationText, Fix: fixText}, nil},
 		{"TestParseResponseHappy6", introText + boldConfidence + goodConfidenceText + boldExplanation3 + explanationText + boldFix4 + fixText,
 			&ParsedResponse{Introduction: introText, Confidence: confidenceValue, Explanation: explanationText, Fix: fixText}, nil},
+		{"TestParseResponseHappy7", introText + header + plainConfidence + goodConfidenceText + header + plainExplanation + explanationText + header + plainFix + fixText,
+			&ParsedResponse{Introduction: introText + header, Confidence: confidenceValue, Explanation: explanationText + header, Fix: fixText}, nil},
 		{"TestParseResponseNoConfidence", introText + goodConfidenceText + boldExplanation + explanationText + boldFix + fixText,
 			&ParsedResponse{Introduction: "", Confidence: 0, Explanation: "", Fix: ""},
 			fmt.Errorf("confidence not found in response")},

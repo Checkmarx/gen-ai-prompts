@@ -276,9 +276,11 @@ func findElement(text, element string) (string, int) {
 		{bold, strings.ToUpper(element), bold},
 		{bold, strings.ToUpper(element), bold2},
 		{bold, strings.ToUpper(element), ""},
+		{"", strings.ToUpper(element), ""},
 		{bold, strings.ToLower(element), bold},
 		{bold, strings.ToLower(element), bold2},
 		{bold, strings.ToLower(element), ""},
+		{"", strings.ToLower(element), ""},
 	}
 
 	for _, alternative := range alternatives {
