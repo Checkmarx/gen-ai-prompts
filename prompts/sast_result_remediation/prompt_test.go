@@ -25,6 +25,9 @@ const (
 	plainExplanation = explanation
 	plainFix         = fix
 	header           = "##"
+	mixedFix         = "PROPOSED  REMEdiation"
+	explanationText  = " this is a short text explaining the score."
+	fixText          = " a fixed snippet"
 )
 
 func getExpectedOutput(confidenceNumber, explanationText, fixText string) string {
@@ -32,8 +35,8 @@ func getExpectedOutput(confidenceNumber, explanationText, fixText string) string
 }
 
 func TestAddDescriptionForIdentifiers(t *testing.T) {
-	input := boldConfidence + " 35 " + boldExplanation + " this is a short explanation." + boldFix + " a fixed snippet"
-	expected := getExpectedOutput(" 35 ", " this is a short explanation.", " a fixed snippet")
+	input := boldConfidence + " 35 " + boldExplanation + explanationText + boldFix + fixText
+	expected := getExpectedOutput(" 35 ", explanationText, fixText)
 	output := getActual(input, t)
 
 	if output[len(output)-1] != expected {
@@ -42,8 +45,8 @@ func TestAddDescriptionForIdentifiers(t *testing.T) {
 }
 
 func TestAddNewlinesIfNecessarySomeNewlines(t *testing.T) {
-	input := boldConfidence + " 35 " + boldExplanation + " this is a short explanation.\n" + boldFix + " a fixed snippet"
-	expected := getExpectedOutput(" 35 ", " this is a short explanation.\n", " a fixed snippet")
+	input := boldConfidence + " 35 " + boldExplanation + explanationText + "\n" + boldFix + fixText
+	expected := getExpectedOutput(" 35 ", explanationText+"\n", fixText)
 
 	output := getActual(input, t)
 
@@ -53,8 +56,8 @@ func TestAddNewlinesIfNecessarySomeNewlines(t *testing.T) {
 }
 
 func TestAddNewlinesIfNecessaryAllNewlines(t *testing.T) {
-	input := boldConfidence + " 35\n " + boldExplanation + " this is a short explanation.\n" + boldFix + " a fixed snippet"
-	expected := getExpectedOutput(" 35\n ", " this is a short explanation.\n", " a fixed snippet")
+	input := boldConfidence + " 35\n " + boldExplanation + explanationText + "\n" + boldFix + fixText
+	expected := getExpectedOutput(" 35\n ", explanationText+"\n", fixText)
 
 	output := getActual(input, t)
 
@@ -70,8 +73,7 @@ func TestParseResponse(t *testing.T) {
 	badConfidenceText := "0\nfailed0"
 	badConfidenceText2 := "N/A"
 	confidenceValue := 35
-	explanationText := " this is a short explanation.\n"
-	fixText := " this is a fixed snippet"
+	explanationText := explanationText + "\n"
 
 	tests := []struct {
 		name     string
@@ -93,6 +95,8 @@ func TestParseResponse(t *testing.T) {
 			&ParsedResponse{Introduction: introText, Confidence: confidenceValue, Explanation: explanationText, Fix: fixText}, nil},
 		{"TestParseResponseHappy7", introText + header + plainConfidence + goodConfidenceText + header + plainExplanation + explanationText + header + plainFix + fixText,
 			&ParsedResponse{Introduction: introText + header, Confidence: confidenceValue, Explanation: explanationText + header, Fix: fixText}, nil},
+		{"TestParseResponseHappy8", introText + boldConfidence + goodConfidenceText + boldExplanation + explanationText + mixedFix + fixText,
+			&ParsedResponse{Introduction: introText, Confidence: confidenceValue, Explanation: explanationText, Fix: fixText}, nil},
 		{"TestParseResponseNoConfidence", introText + goodConfidenceText + boldExplanation + explanationText + boldFix + fixText,
 			&ParsedResponse{Introduction: "", Confidence: 0, Explanation: "", Fix: ""},
 			fmt.Errorf("confidence not found in response")},
