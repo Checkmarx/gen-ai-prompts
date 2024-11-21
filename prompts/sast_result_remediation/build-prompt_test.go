@@ -54,7 +54,7 @@ func TestBuildPrompt(t *testing.T) {
 		wantErr    error
 	}{
 		{"TestBuildPromptHappy", args{"testdata/cx_result.json", "13588507", "testdata/sources"},
-			systemPrompt, userPrompt("SQL_Injection", "Java", userPromptCode), nil},
+			systemPrompt, userPrompt("SQL_Injection", 89, "Java", userPromptCode), nil},
 		{"TestBuildPromptFileNotFound", args{"invalidFile", "13588507", "testdata/sources"},
 			"", "", fmt.Errorf("error reading and parsing SAST results file 'invalidFile': 'open invalidFile: no such file or directory'")},
 		{"TestBuildPromptResultIdNotFound", args{"testdata/cx_result.json", "invalidResultId", "testdata/sources"},
@@ -108,7 +108,7 @@ func TestBuildPromptsForLanguageAndQuery(t *testing.T) {
 					Language:    "Java",
 					Query:       "SQL_Injection",
 					System:      systemPrompt,
-					User:        userPrompt("SQL_Injection", "Java", userPromptCode),
+					User:        userPrompt("SQL_Injection", 89, "Java", userPromptCode),
 					Error:       nil,
 				},
 				{
@@ -117,7 +117,7 @@ func TestBuildPromptsForLanguageAndQuery(t *testing.T) {
 					Language:    "Java",
 					Query:       "SQL_Injection",
 					System:      systemPrompt,
-					User:        userPrompt("SQL_Injection", "Java", userPromptCode2),
+					User:        userPrompt("SQL_Injection", 89, "Java", userPromptCode2),
 					Error:       nil,
 				},
 			},
@@ -131,7 +131,7 @@ func TestBuildPromptsForLanguageAndQuery(t *testing.T) {
 					Language:    "JavaScript",
 					Query:       "Client_DOM_Stored_XSS",
 					System:      systemPrompt,
-					User:        userPrompt("Client_DOM_Stored_XSS", "JavaScript", userPromptCode3),
+					User:        userPrompt("Client_DOM_Stored_XSS", 79, "JavaScript", userPromptCode3),
 					Error:       nil,
 				},
 				{
@@ -190,7 +190,7 @@ func TestBuildPromptsForResultsList(t *testing.T) {
 					Language:    "Java",
 					Query:       "SQL_Injection",
 					System:      systemPrompt,
-					User:        userPrompt("SQL_Injection", "Java", userPromptCode),
+					User:        userPrompt("SQL_Injection", 89, "Java", userPromptCode),
 					Error:       nil,
 				},
 				{
@@ -199,7 +199,7 @@ func TestBuildPromptsForResultsList(t *testing.T) {
 					Language:    "Java",
 					Query:       "SQL_Injection",
 					System:      systemPrompt,
-					User:        userPrompt("SQL_Injection", "Java", userPromptCode2),
+					User:        userPrompt("SQL_Injection", 89, "Java", userPromptCode2),
 					Error:       nil,
 				},
 			},
@@ -229,8 +229,8 @@ func TestBuildPromptsForResultsList(t *testing.T) {
 	}
 }
 
-func userPrompt(query, language, code string) string {
-	return fmt.Sprintf(userPromptTemplate, query, language, code)
+func userPrompt(query string, cwe int, language string, code string) string {
+	return fmt.Sprintf(userPromptTemplate, query, cwe, language, code)
 }
 
 const codeMissingNode = `    public String getRealPath(String path) {// JspCServletContext.java:296
@@ -378,15 +378,15 @@ func TestBuildPromptForResults(t *testing.T) {
 		wantErr    error
 	}{
 		{"TestBuildPromptForResultMissingNode", args{"testdata/sast_result_missing-node.json", "c1CrCRw4/3/A6q+6zwIhShQIe1I=", "testdata/sources"},
-			systemPrompt, userPrompt("Stored_XSS", "Java", codeMissingNode), nil},
+			systemPrompt, userPrompt("Stored_XSS", 79, "Java", codeMissingNode), nil},
 		{"TestBuildPromptTwoSimilarResults1", args{"testdata/two_similar_results.json", "13893625", "testdata/sources"},
-			systemPrompt, userPrompt("Log_Forging", "Java", codeTwoSimilarResults1), nil},
+			systemPrompt, userPrompt("Log_Forging", 117, "Java", codeTwoSimilarResults1), nil},
 		{"TestBuildPromptTwoSimilarResults2", args{"testdata/two_similar_results.json", "13893626", "testdata/sources"},
-			systemPrompt, userPrompt("Log_Forging", "Java", codeTwoSimilarResults2), nil},
+			systemPrompt, userPrompt("Log_Forging", 117, "Java", codeTwoSimilarResults2), nil},
 		{"TestBuildPromptJspResult", args{"testdata/jsp_result.json", "vuKUhCJ5drCeY6IDB//eBu8wvkk=", "testdata/sources"},
-			systemPrompt, userPrompt("LDAP_Injection", "Java", jspCode), nil},
+			systemPrompt, userPrompt("LDAP_Injection", 90, "Java", jspCode), nil},
 		{"TestBuildPromptJspAndJavaResult", args{"testdata/jsp_and_java_result.json", "XrM9Lk/bjJHxLOcn4XETGHJ1ko0=", "testdata/sources"},
-			systemPrompt, userPrompt("Reflected_XSS_All_Clients", "Java", jspAndJavaCode), nil},
+			systemPrompt, userPrompt("Reflected_XSS_All_Clients", 79, "Java", jspAndJavaCode), nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

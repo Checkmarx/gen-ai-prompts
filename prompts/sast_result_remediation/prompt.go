@@ -34,15 +34,8 @@ const (
 // This constant is used to format the identifiers (confidence, explanation, fix) and their descriptions with HTML tags
 const identifierTitleFormat = "<span style=\"color: regular;\">%s</span><span style=\"color: grey; font-style: italic;\">%s</span>"
 
-const userPromptTemplate = `Checkmarx Static Application Security Testing (SAST) detected the %s vulnerability within the provided %s code snippet. 
-The attack vector is presented by code snippets annotated by comments in the form ` + "`//SAST Node #X: element (element-type)`" + ` where X is 
-the node index in the result, ` + "`element`" + ` is the name of the element through which the data flows, and the ` + "`element-type`" + ` is it's type. 
-The first and last nodes are indicated by ` + "`(input)` and `(output)`" + ` respectively. Each method definition is annotated by a comment indicating its 
-file path, file name and line where the method begins:
-` + code + `
-%s
-` + code + `
-Please review the code above and provide a confidence score ranging from 0 to 100. 
+const userPromptTemplate = `Checkmarx Static Application Security Testing (SAST) detected the %s vulnerability (CWE-%d) within the provided %s code snippet. 
+Please review the code below and provide a confidence score ranging from 0 to 100. 
 A score of 0 means you believe the result is completely incorrect, unexploitable, and a false positive. 
 A score of 100 means you believe the result is completely correct, exploitable, and a true positive.
  
@@ -54,10 +47,14 @@ Instructions for confidence score computation:
 This is also known as a second-order vulnerability
 4. The confidence score of a vulnerability with a vector containing nodes in test code, cannot be more than 50 since it does not run in production.
 Test code is identified either by the file name containing the word 'test' or the file path containing the word 'test'.
-5. Pay your special attention to the first and last code snippet - whether a specific vulnerability found by Checkmarx SAST can start/occur here, 
-or it's a false positive.
-6. If you don't find enough evidence about a vulnerability, just lower the score.
-7. If you are not sure, just lower the confidence - we don't want to have false positive results with a high confidence score.
+5. Pay special attention to the input and output nodes and see if they match the expected input and output for the vulnerability found. 
+If the actual input or output does not match the expected, the confidence score cannot be no more than 50. For example, writing to a log as the 
+output of a Reflected XSS should get a very low score.   
+6. If a node in the vulnerability vector is a sanitization node, the confidence score should be lower, even if the sanitization is not reliable. 
+7. If the vulnerability vector is hard to read or follow because it is long or complex, the confidence score should be lower.
+8. If the vulnerability vector is hard reproduce is a test environment, the confidence score should be lower.
+9. If you don't find enough evidence about a vulnerability, just lower the score.
+10. If you are not sure, just lower the confidence - we don't want to have false positive results with a high confidence score.
  
 Please provide a brief explanation for your confidence score, don't mention all the instruction above.
 
@@ -69,7 +66,15 @@ Your analysis MUST be presented in the following format:
 ` + "\n" + bold + explanation + bold +
 	` short_text
 ` + "\n" + bold + fix + bold +
-	` fixed_snippet`
+	` fixed_snippet
+
+The attack vector is presented by code snippets annotated by comments in the form ` + "`//SAST Node #X: element (element-type)`" + ` where X is 
+the node index in the result, ` + "`element`" + ` is the name of the element through which the data flows, and the ` + "`element-type`" + ` is it's type. 
+The first and last nodes are indicated by ` + "`(input)` and `(output)`" + ` respectively. Each method definition is annotated by a comment indicating its 
+file path, file name and line where the method begins:
+` + code + `
+%s
+` + code
 
 type ParsedResponse struct {
 	Confidence   int
@@ -113,7 +118,7 @@ func CreateUserPrompt(result *Result, sources map[string][]string) (string, erro
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf(userPromptTemplate, result.Data.QueryName, result.Data.LanguageName, promptSource), nil
+	return fmt.Sprintf(userPromptTemplate, result.Data.QueryName, result.VulnerabilityDetails.CweID, result.Data.LanguageName, promptSource), nil
 }
 
 // createSourceForPrompt creates the comment-annotated source snippet for the SAST prompt.
