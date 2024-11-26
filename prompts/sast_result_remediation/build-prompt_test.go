@@ -5,10 +5,10 @@ import (
 	"testing"
 )
 
-const userPromptCode = `  public AttackResult completed(@RequestParam String query) {// SqlInjectionLesson3.java:53//SAST Node #0 (input): query (ParamDecl)
+const userPromptCode = `  public AttackResult completed(@RequestParam String query) {//FILE: SqlInjectionLesson3.java:53//SAST Node #0 (input): query (ParamDecl)
     return injectableQuery(query);//SAST Node #1: query (StringReference)
 // method continues ...
-  protected AttackResult injectableQuery(String query) {// SqlInjectionLesson3.java:57//SAST Node #2: query (ParamDecl)
+  protected AttackResult injectableQuery(String query) {//FILE: SqlInjectionLesson3.java:57//SAST Node #2: query (ParamDecl)
     try (Connection connection = dataSource.getConnection()) {
       try (Statement statement =
           connection.createStatement(TYPE_SCROLL_INSENSITIVE, CONCUR_READ_ONLY)) {
@@ -17,16 +17,16 @@ const userPromptCode = `  public AttackResult completed(@RequestParam String que
         statement.executeUpdate(query);//SAST Node #3: query (StringReference)//SAST Node #4 (output): executeUpdate (MethodInvokeExpr)
 // method continues ...`
 
-const userPromptCode2 = `  public AttackResult completed(@RequestParam String query) {// SqlInjectionLesson2.java:58//SAST Node #0 (input): query (ParamDecl)
+const userPromptCode2 = `  public AttackResult completed(@RequestParam String query) {//FILE: SqlInjectionLesson2.java:58//SAST Node #0 (input): query (ParamDecl)
     return injectableQuery(query);//SAST Node #1: query (StringReference)
 // method continues ...
-  protected AttackResult injectableQuery(String query) {// SqlInjectionLesson2.java:62//SAST Node #2: query (ParamDecl)
+  protected AttackResult injectableQuery(String query) {//FILE: SqlInjectionLesson2.java:62//SAST Node #2: query (ParamDecl)
     try (var connection = dataSource.getConnection()) {
       Statement statement = connection.createStatement(TYPE_SCROLL_INSENSITIVE, CONCUR_READ_ONLY);
       ResultSet results = statement.executeQuery(query);//SAST Node #3: query (StringReference)//SAST Node #4 (output): executeQuery (MethodInvokeExpr)
 // method continues ...`
 
-const userPromptCode3 = `    $.get("challenge/8/votes/", function (votes) {// /challenge8.js:7//SAST Node #0 (input): votes (ParamDecl)
+const userPromptCode3 = `    $.get("challenge/8/votes/", function (votes) {//FILE: /challenge8.js:7//SAST Node #0 (input): votes (ParamDecl)
             var totalVotes = 0;
             for (var i = 1; i <= 5; i++) {
                 totalVotes = totalVotes + votes[i];
@@ -233,7 +233,7 @@ func userPrompt(query string, cwe int, language string, code string) string {
 	return fmt.Sprintf(userPromptTemplate, query, cwe, language, code)
 }
 
-const codeMissingNode = `    public String getRealPath(String path) {// JspCServletContext.java:296
+const codeMissingNode = `    public String getRealPath(String path) {//FILE: JspCServletContext.java:296
         if (!myResourceBaseURL.getProtocol().equals("file")) {
             return null;
         }
@@ -248,14 +248,14 @@ const codeMissingNode = `    public String getRealPath(String path) {// JspCServ
             File f = new File(url.toURI());
             return f.getAbsolutePath();//SAST Node #0 (input): getAbsolutePath (MethodInvokeExpr)
 // method continues ...
-    public String getPathTranslated() {// ApplicationHttpRequest.java:450
+    public String getPathTranslated() {//FILE: ApplicationHttpRequest.java:450
         if (getPathInfo() == null || getServletContext() == null) {
             return null;
         }
 
         return getServletContext().getRealPath(getPathInfo());//SAST Node #1: getRealPath (MethodInvokeExpr)
 // method continues ...
-        public void service(HttpServletRequest request,// TomcatBaseTest.java:450
+        public void service(HttpServletRequest request,//FILE: TomcatBaseTest.java:450
                             HttpServletResponse response)
                 throws ServletException, IOException {
 
@@ -308,19 +308,19 @@ const codeMissingNode = `    public String getRealPath(String path) {// JspCServ
                         request.getPathTranslated());//SAST Node #2: getPathTranslated (MethodInvokeExpr)
 // method continues ...`
 
-const codeTwoSimilarResults1 = `  public String logRequest(// Ping.java:47
+const codeTwoSimilarResults1 = `  public String logRequest(//FILE: Ping.java:47
       @RequestHeader("User-Agent") String userAgent, @RequestParam(required = false) String text) {//SAST Node #0 (input): text (ParamDecl)
     String logLine = String.format("%s %s %s", "GET", userAgent, text);//SAST Node #1: text (StringReference)//SAST Node #2: format (MethodInvokeExpr)//SAST Node #3: logLine (Declarator)
     log.debug(logLine);//SAST Node #4: logLine (StringReference)//SAST Node #5 (output): debug (MethodInvokeExpr)
 // method continues ...`
 
-const codeTwoSimilarResults2 = `  public String logRequest(// Ping.java:47
+const codeTwoSimilarResults2 = `  public String logRequest(//FILE: Ping.java:47
       @RequestHeader("User-Agent") String userAgent, @RequestParam(required = false) String text) {//SAST Node #0 (input): userAgent (ParamDecl)
     String logLine = String.format("%s %s %s", "GET", userAgent, text);//SAST Node #1: userAgent (StringReference)//SAST Node #2: format (MethodInvokeExpr)//SAST Node #3: logLine (Declarator)
     log.debug(logLine);//SAST Node #4: logLine (StringReference)//SAST Node #5 (output): debug (MethodInvokeExpr)
 // method continues ...`
 
-const jspCode = `    String jndiName = request.getParameter("jndiName");// jndi.jsp:18//SAST Node #0 (input): &#34;&#34;jndiName&#34;&#34; (StringLiteral)//SAST Node #1: getParameter (MethodInvokeExpr)//SAST Node #2: jndiName (Declarator)
+const jspCode = `    String jndiName = request.getParameter("jndiName");//FILE: jndi.jsp:18//SAST Node #0 (input): &#34;&#34;jndiName&#34;&#34; (StringLiteral)//SAST Node #1: getParameter (MethodInvokeExpr)//SAST Node #2: jndiName (Declarator)
 
     javax.naming.Context initCtx = new javax.naming.InitialContext();
     javax.naming.Context envCtx = (javax.naming.Context) initCtx.lookup("java:comp/env");
@@ -329,7 +329,7 @@ const jspCode = `    String jndiName = request.getParameter("jndiName");// jndi.
         Object obj = envCtx.lookup(jndiName);//SAST Node #3: jndiName (StringReference)//SAST Node #4 (output): lookup (MethodInvokeExpr)
 // method continues ...`
 
-const jspAndJavaCode = `<jsp:setProperty name="numguess" property="*"/>// numguess.jsp:25//SAST Node #0 (input): getParameterMap (MethodInvokeExpr)//SAST Node #1: set (MethodInvokeExpr)//SAST Node #2: numguess (NumberGuessBeanReference)
+const jspAndJavaCode = `<jsp:setProperty name="numguess" property="*"/>//FILE: numguess.jsp:25//SAST Node #0 (input): getParameterMap (MethodInvokeExpr)//SAST Node #1: set (MethodInvokeExpr)//SAST Node #2: numguess (NumberGuessBeanReference)
 
 <html>
 <head><title>Number Guess</title></head>
@@ -360,7 +360,7 @@ const jspAndJavaCode = `<jsp:setProperty name="numguess" property="*"/>// numgue
 
   Good guess, but nope.  Try <b><%= numguess.getHint() %></b>.//SAST Node #5: numguess (NumberGuessBeanReference)//SAST Node #7 (output): getHint (MethodInvokeExpr)
 // method continues ...
-    public String getHint() {// NumberGuessBean.java:48
+    public String getHint() {//FILE: NumberGuessBean.java:48
         return "" + hint;//SAST Node #6: hint (StringReference)
 // method continues ...`
 

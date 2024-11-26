@@ -7,11 +7,7 @@ import (
 	"unicode"
 )
 
-const systemPrompt = `You are the Checkmarx AI Guided Remediation bot who can answer technical questions related to the results of Checkmarx Static Application 
-Security Testing (SAST). You should be able to analyze and understand both the technical aspects of the security results and the common queries users may have 
-about the results. You should also be capable of delivering clear, concise, and informative answers to help take appropriate action based on the findings.
-If a question irrelevant to the mentioned source code or SAST result is asked, answer 'I am the AI Guided Remediation assistant and can answer only on questions 
-related to source code or SAST results or SAST Queries'.`
+const systemPrompt = `You are the Checkmarx AI Guided Remediation bot that answers technical questions related to the results of Checkmarx Static Application Security Testing (SAST). You analyze and understand both the technical aspects of the security results and common questions users may have about the results. You are capable of delivering clear, concise, and informative answers to help take appropriate action based on the findings. If a question asked is irrelevant to the mentioned source code or SAST result, answer 'I am the AI Guided Remediation assistant and can answer only on questions related to source code or SAST results or SAST Queries'.`
 
 const (
 	confidence      = "CONFIDENCE" // this is the expected confidence identifier
@@ -35,31 +31,34 @@ const (
 const identifierTitleFormat = "<span style=\"color: regular;\">%s</span><span style=\"color: grey; font-style: italic;\">%s</span>"
 
 const userPromptTemplate = `Checkmarx Static Application Security Testing (SAST) detected the %s vulnerability (CWE-%d) within the provided %s code snippet. 
-Please review the code below and provide a confidence score ranging from 0 to 100. 
-A score of 0 means you believe the result is completely incorrect, unexploitable, and a false positive. 
+The attack vector is presented by a code snippet annotated by comments. There are two types of annotations:
+1. Attack vector nodes: in the form ` + "`//SAST Node #X: element (element-type)`" + ` where X is the node index in the result, ` + "`element`" + ` is the name of the element through which the data flows, and the ` + "`element-type`" + ` is it's type. First and Last nodes are indicated by additional ` + "`(input)`" + ` and ` + "`(output)`" + ` respectively. 	
+2. Method definitions: are annotated by a comment of the form ` + "`//FILE: /file-path/file-name:line`" + ` indicating its ` + "`file-path`" + `, ` + "`file-name`" + ` and ` + "`line`" + ` where the method begins.
+An annotation comment can have multiple annotations. 
+The code to review is at the end under the title **CODE TO REVIEW**.
+
+Please review the code below and provide a confidence score ranging from 0 to 100.
+A score of 0 means you believe the result is completely incorrect, unexploitable, and a false positive.
 A score of 100 means you believe the result is completely correct, exploitable, and a true positive.
- 
+
 Instructions for confidence score computation:
- 
+
 1. The confidence score of a vulnerability which can be done from the Internet is much higher than from the local console.
 2. The confidence score of a vulnerability which can be done by anonymous user is much higher than of an authenticated user.
-3. The confidence score of a vulnerability with a vector starting with a stored input (like from files/db etc) cannot be more than 50. 
+3. The confidence score of a vulnerability with a vector starting with a stored input (like from files/db etc) cannot be more than 50.
 This is also known as a second-order vulnerability
-4. The confidence score of a vulnerability with a vector containing nodes in test code, cannot be more than 50 since it does not run in production.
-Test code is identified either by the file name containing the word 'test' or the file path containing the word 'test'.
-5. Pay special attention to the input and output nodes and see if they match the expected input and output for the vulnerability found. 
-If the actual input or output does not match the expected, the confidence score cannot be no more than 50. For example, writing to a log as the 
-output of a Reflected XSS should get a very low score.   
-6. If a node in the vulnerability vector is a sanitization node, the confidence score should be lower, even if the sanitization is not reliable. 
+4. The confidence score of a vulnerability with a vector containing nodes in test code, cannot be more than 50 since it does not run in production. Test code is identified either by the file name containing the word 'test' or the file path containing the word 'test'. The same reasoning applies to file names or file paths containing the words 'demo', 'example', 'sample' or the like. These also do not run in production.
+5. Pay special attention to the input and output nodes and see if they match the expected input and output for the vulnerability found. If the actual input or output does not match the expected, the confidence score cannot be no more than 50. For example, writing to a log as the output of a Reflected XSS should get a very low score.
+6. If a node in the vulnerability vector is a sanitization node, the confidence score should be lower, even if the sanitization is not reliable.
 7. If the vulnerability vector is hard to read or follow because it is long or complex, the confidence score should be lower.
 8. If the vulnerability vector is hard reproduce is a test environment, the confidence score should be lower.
 9. If you don't find enough evidence about a vulnerability, just lower the score.
 10. If you are not sure, just lower the confidence - we don't want to have false positive results with a high confidence score.
- 
+
 Please provide a brief explanation for your confidence score, don't mention all the instruction above.
 
 Next, please provide code that remediates the vulnerability so that a developer can copy paste instead of the snippet above.
- 
+
 Your analysis MUST be presented in the following format:
 ` + bold + confidence + bold +
 	` number
@@ -68,10 +67,8 @@ Your analysis MUST be presented in the following format:
 ` + "\n" + bold + fix + bold +
 	` fixed_snippet
 
-The attack vector is presented by code snippets annotated by comments in the form ` + "`//SAST Node #X: element (element-type)`" + ` where X is 
-the node index in the result, ` + "`element`" + ` is the name of the element through which the data flows, and the ` + "`element-type`" + ` is it's type. 
-The first and last nodes are indicated by ` + "`(input)` and `(output)`" + ` respectively. Each method definition is annotated by a comment indicating its 
-file path, file name and line where the method begins:
+**CODE TO REVIEW**
+IMPORTANT: pay special attention to the ANNOTATED LINES in the following code, they provide important details regarding the vulnerability and the relevance of code to production or other environments.
 ` + code + `
 %s
 ` + code
@@ -239,7 +236,7 @@ func GetMethodByMethodLine(filename string, lines []string, methodLineNumber, no
 	}
 	methodLines := lines[startIndex : startIndex+numberOfLines]
 	if !tagged {
-		methodLines[0] += fmt.Sprintf("// %s:%d", filename, methodLineNumber)
+		methodLines[0] += fmt.Sprintf("//FILE: %s:%d", filename, methodLineNumber)
 	}
 	return methodLines, nil
 }
