@@ -321,47 +321,129 @@ const codeTwoSimilarResults2 = `  public String logRequest(//FILE: Ping.java:47
 // method continues ...`
 
 const jspCode = `    String jndiName = request.getParameter("jndiName");//FILE: jndi.jsp:18//SAST Node #0 (input): &#34;&#34;jndiName&#34;&#34; (StringLiteral)//SAST Node #1: getParameter (MethodInvokeExpr)//SAST Node #2: jndiName (Declarator)
-
-    javax.naming.Context initCtx = new javax.naming.InitialContext();
-    javax.naming.Context envCtx = (javax.naming.Context) initCtx.lookup("java:comp/env");
-
-    try {
-        Object obj = envCtx.lookup(jndiName);//SAST Node #3: jndiName (StringReference)//SAST Node #4 (output): lookup (MethodInvokeExpr)
+// method continues ...
+        Object obj = envCtx.lookup(jndiName);//FILE: jndi.jsp:24//SAST Node #3: jndiName (StringReference)//SAST Node #4 (output): lookup (MethodInvokeExpr)
 // method continues ...`
 
 const jspAndJavaCode = `<jsp:setProperty name="numguess" property="*"/>//FILE: numguess.jsp:25//SAST Node #0 (input): getParameterMap (MethodInvokeExpr)//SAST Node #1: set (MethodInvokeExpr)//SAST Node #2: numguess (NumberGuessBeanReference)
-
-<html>
-<head><title>Number Guess</title></head>
-<body bgcolor="white">
-<font size=4>
-
-<% if (numguess.getSuccess()) { %>//SAST Node #3: numguess (NumberGuessBeanReference)
-
-  Congratulations!  You got it.
-  And after just <%= numguess.getNumGuesses() %> tries.<p>
-
-  <% numguess.reset(); %>
-
-  Care to <a href="numguess.jsp">try again</a>?
-
-<% } else if (numguess.getNumGuesses() == 0) { %>//SAST Node #4: numguess (NumberGuessBeanReference)
-
-  Welcome to the Number Guess game.<p>
-
-  I'm thinking of a number between 1 and 100.<p>
-
-  <form method=get>
-  What's your guess? <input type=text name=guess>
-  <input type=submit value="Submit">
-  </form>
-
-<% } else { %>
-
-  Good guess, but nope.  Try <b><%= numguess.getHint() %></b>.//SAST Node #5: numguess (NumberGuessBeanReference)//SAST Node #7 (output): getHint (MethodInvokeExpr)
+// method continues ...
+<% if (numguess.getSuccess()) { %>//FILE: numguess.jsp:32//SAST Node #3: numguess (NumberGuessBeanReference)
+// method continues ...
+<% } else if (numguess.getNumGuesses() == 0) { %>//FILE: numguess.jsp:41//SAST Node #4: numguess (NumberGuessBeanReference)
+// method continues ...
+  Good guess, but nope.  Try <b><%= numguess.getHint() %></b>.//FILE: numguess.jsp:54//SAST Node #5: numguess (NumberGuessBeanReference)//SAST Node #7 (output): getHint (MethodInvokeExpr)
 // method continues ...
     public String getHint() {//FILE: NumberGuessBean.java:48
         return "" + hint;//SAST Node #6: hint (StringReference)
+// method continues ...`
+
+const codeTwoMethodsWithSameName = `    void parseParameters() {//FILE: ApplicationHttpRequest.java:710
+
+        if (parsedParams) {
+            return;
+        }
+
+        parameters = new ParameterMap<>(getRequest().getParameterMap());//SAST Node #0 (input): getParameterMap (MethodInvokeExpr)//SAST Node #1: ParameterMap (ObjectCreateExpr)//SAST Node #2: parameters (MapReference)
+// method continues ...
+    public String getParameter(String name) {//FILE: ApplicationHttpRequest.java:394
+        parseParameters();//SAST Node #3: parseParameters (MethodInvokeExpr)
+
+        String[] value = parameters.get(name);//SAST Node #4: parameters (MapReference)//SAST Node #5: get (MethodInvokeExpr)//SAST Node #6: value (Declarator)
+        if (value == null) {
+            return null;
+        }
+        return value[0];//SAST Node #7: value (StringReference)
+// method continues ...
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {//FILE: HostManagerServlet.java:163
+
+        StringManager smClient = StringManager.getManager(Constants.Package, request.getLocales());
+
+        // Identify the request parameters that we need
+        String command = request.getPathInfo();
+        if (command == null) {
+            command = request.getServletPath();
+        }
+        String name = request.getParameter("name");//SAST Node #8: getParameter (MethodInvokeExpr)//SAST Node #9: name (Declarator)
+
+        // Prepare our output writer to generate the response message
+        response.setContentType("text/plain; charset=" + Constants.CHARSET);
+        // Stop older versions of IE thinking they know best. We set text/plain
+        // in the line above for a reason. IE's behaviour is unwanted at best
+        // and dangerous at worst.
+        response.setHeader("X-Content-Type-Options", "nosniff");
+        PrintWriter writer = response.getWriter();
+
+        // Process the requested command
+        if (command == null) {
+            writer.println(smClient.getString("hostManagerServlet.noCommand"));
+        } else if (command.equals("/add")) {
+            add(request, writer, name, false, smClient);//SAST Node #10: name (StringReference)
+// method continues ...
+    protected void add(HttpServletRequest request, PrintWriter writer, String name, boolean htmlMode,//FILE: HostManagerServlet.java:216//SAST Node #11: name (ParamDecl)
+            StringManager smClient) {
+        String aliases = request.getParameter("aliases");
+        String appBase = request.getParameter("appBase");
+        boolean manager = booleanParameter(request, "manager", false, htmlMode);
+        boolean autoDeploy = booleanParameter(request, "autoDeploy", true, htmlMode);
+        boolean deployOnStartup = booleanParameter(request, "deployOnStartup", true, htmlMode);
+        boolean deployXML = booleanParameter(request, "deployXML", true, htmlMode);
+        boolean unpackWARs = booleanParameter(request, "unpackWARs", true, htmlMode);
+        boolean copyXML = booleanParameter(request, "copyXML", false, htmlMode);
+        add(writer, name, aliases, appBase, manager, autoDeploy, deployOnStartup, deployXML, unpackWARs, copyXML,//SAST Node #12: name (StringReference)
+// method continues ...
+    protected synchronized void add(PrintWriter writer, String name, String aliases, String appBase, boolean manager,//FILE: HostManagerServlet.java:302//SAST Node #13: name (ParamDecl)
+            boolean autoDeploy, boolean deployOnStartup, boolean deployXML, boolean unpackWARs, boolean copyXML,
+            StringManager smClient) {
+        if (debug >= 1) {
+            log(sm.getString("hostManagerServlet.add", name));
+        }
+
+        // Validate the requested host name
+        if (name == null || name.length() == 0) {//SAST Node #14: name (StringReference)
+            writer.println(smClient.getString("hostManagerServlet.invalidHostName", name));
+            return;
+        }
+
+        // Check if host already exists
+        if (engine.findChild(name) != null) {
+            writer.println(smClient.getString("hostManagerServlet.alreadyHost", name));
+            return;
+        }
+
+        // Validate and create appBase
+        File appBaseFile = null;
+        File file = null;
+        String applicationBase = appBase;
+        if (applicationBase == null || applicationBase.length() == 0) {
+            applicationBase = name;
+        }
+        file = new File(applicationBase);
+        if (!file.isAbsolute()) {
+            file = new File(engine.getCatalinaBase(), file.getPath());
+        }
+        try {
+            appBaseFile = file.getCanonicalFile();
+        } catch (IOException e) {
+            appBaseFile = file;
+        }
+        if (!appBaseFile.mkdirs() && !appBaseFile.isDirectory()) {
+            writer.println(smClient.getString("hostManagerServlet.appBaseCreateFail", appBaseFile.toString(), name));
+            return;
+        }
+
+        // Create base for config files
+        File configBaseFile = getConfigBase(name);//SAST Node #15: name (StringReference)
+// method continues ...
+    protected File getConfigBase(String hostName) {//FILE: HostManagerServlet.java:622//SAST Node #16: hostName (ParamDecl)
+        File configBase = new File(context.getCatalinaBase(), "conf");
+        if (!configBase.exists()) {
+            return null;
+        }
+        if (engine != null) {
+            configBase = new File(configBase, engine.getName());
+        }
+        if (installedHost != null) {
+            configBase = new File(configBase, hostName);//SAST Node #17: hostName (StringReference)//SAST Node #18 (output): File (ObjectCreateExpr)
 // method continues ...`
 
 func TestBuildPromptForResults(t *testing.T) {
@@ -387,6 +469,8 @@ func TestBuildPromptForResults(t *testing.T) {
 			systemPrompt, userPrompt("LDAP_Injection", 90, "Java", jspCode), nil},
 		{"TestBuildPromptJspAndJavaResult", args{"testdata/jsp_and_java_result.json", "XrM9Lk/bjJHxLOcn4XETGHJ1ko0=", "testdata/sources"},
 			systemPrompt, userPrompt("Reflected_XSS_All_Clients", 79, "Java", jspAndJavaCode), nil},
+		{"TestBuildPromptTwoMethodsWithSameName", args{"testdata/two_methods_with_same_name.json", "5LcQqrUhDTZWEVCBWwMWGhSm+00=", "testdata/sources"},
+			systemPrompt, userPrompt("Input_Path_Not_Canonicalized", 73, "Java", codeTwoMethodsWithSameName), nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
