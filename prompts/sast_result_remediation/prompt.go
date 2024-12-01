@@ -3,6 +3,7 @@ package sast_result_remediation
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -140,7 +141,7 @@ func createSourceForPrompt(result *Result, sources map[string][]string) (string,
 	for i := range result.Data.Nodes {
 		node := result.Data.Nodes[i]
 		sourceFilename := strings.ReplaceAll(node.FileName, "\\", "/")
-		methodSpec := sourceFilename + ":" + node.Method
+		methodSpec := sourceFilename + ":" + node.Method + ":" + strconv.Itoa(node.MethodLine)
 		methodIndex, exists := methods[methodSpec]
 		if !exists { // first time this method is encountered in the result
 			m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], node.MethodLine, node.Line, false)
