@@ -318,11 +318,31 @@ const codeMissingNode = `    public String getRealPath(String path) {//FILE: Jsp
                         request.getPathTranslated());//SAST Node #2: getPathTranslated (MethodInvokeExpr)
 // method continues ...`
 
+const codeMissingNodeNLO = `    public String getRealPath(String path) {//FILE: JspCServletContext.java:296
+// ...
+            return f.getAbsolutePath();//SAST Node #0 (input): getAbsolutePath (MethodInvokeExpr)
+// ...
+    public String getPathTranslated() {//FILE: ApplicationHttpRequest.java:450
+// ...
+        return getServletContext().getRealPath(getPathInfo());//SAST Node #1: getRealPath (MethodInvokeExpr)
+// ...
+        public void service(HttpServletRequest request,//FILE: TomcatBaseTest.java:450
+// ...
+            out.println("REQUEST-PATH-TRANSLATED: " +//SAST Node #3 (output): println (MethodInvokeExpr)
+                        request.getPathTranslated());//SAST Node #2: getPathTranslated (MethodInvokeExpr)
+// ...`
+
 const codeTwoSimilarResults1 = `  public String logRequest(//FILE: Ping.java:47
       @RequestHeader("User-Agent") String userAgent, @RequestParam(required = false) String text) {//SAST Node #0 (input): text (ParamDecl)
     String logLine = String.format("%s %s %s", "GET", userAgent, text);//SAST Node #1: text (StringReference)//SAST Node #2: format (MethodInvokeExpr)//SAST Node #3: logLine (Declarator)
     log.debug(logLine);//SAST Node #4: logLine (StringReference)//SAST Node #5 (output): debug (MethodInvokeExpr)
 // method continues ...`
+
+const codeTwoSimilarResults1NLO = `  public String logRequest(//FILE: Ping.java:47
+      @RequestHeader("User-Agent") String userAgent, @RequestParam(required = false) String text) {//SAST Node #0 (input): text (ParamDecl)
+    String logLine = String.format("%s %s %s", "GET", userAgent, text);//SAST Node #1: text (StringReference)//SAST Node #2: format (MethodInvokeExpr)//SAST Node #3: logLine (Declarator)
+    log.debug(logLine);//SAST Node #4: logLine (StringReference)//SAST Node #5 (output): debug (MethodInvokeExpr)
+// ...`
 
 const codeTwoSimilarResults2 = `  public String logRequest(//FILE: Ping.java:47
       @RequestHeader("User-Agent") String userAgent, @RequestParam(required = false) String text) {//SAST Node #0 (input): userAgent (ParamDecl)
@@ -330,10 +350,21 @@ const codeTwoSimilarResults2 = `  public String logRequest(//FILE: Ping.java:47
     log.debug(logLine);//SAST Node #4: logLine (StringReference)//SAST Node #5 (output): debug (MethodInvokeExpr)
 // method continues ...`
 
+const codeTwoSimilarResults2NLO = `  public String logRequest(//FILE: Ping.java:47
+      @RequestHeader("User-Agent") String userAgent, @RequestParam(required = false) String text) {//SAST Node #0 (input): userAgent (ParamDecl)
+    String logLine = String.format("%s %s %s", "GET", userAgent, text);//SAST Node #1: userAgent (StringReference)//SAST Node #2: format (MethodInvokeExpr)//SAST Node #3: logLine (Declarator)
+    log.debug(logLine);//SAST Node #4: logLine (StringReference)//SAST Node #5 (output): debug (MethodInvokeExpr)
+// ...`
+
 const jspCode = `    String jndiName = request.getParameter("jndiName");//FILE: jndi.jsp:18//SAST Node #0 (input): &#34;&#34;jndiName&#34;&#34; (StringLiteral)//SAST Node #1: getParameter (MethodInvokeExpr)//SAST Node #2: jndiName (Declarator)
 // method continues ...
         Object obj = envCtx.lookup(jndiName);//FILE: jndi.jsp:24//SAST Node #3: jndiName (StringReference)//SAST Node #4 (output): lookup (MethodInvokeExpr)
 // method continues ...`
+
+const jspCodeNLO = `    String jndiName = request.getParameter("jndiName");//FILE: jndi.jsp:18//SAST Node #0 (input): &#34;&#34;jndiName&#34;&#34; (StringLiteral)//SAST Node #1: getParameter (MethodInvokeExpr)//SAST Node #2: jndiName (Declarator)
+// ...
+        Object obj = envCtx.lookup(jndiName);//FILE: jndi.jsp:24//SAST Node #3: jndiName (StringReference)//SAST Node #4 (output): lookup (MethodInvokeExpr)
+// ...`
 
 const jspAndJavaCode = `<jsp:setProperty name="numguess" property="*"/>//FILE: numguess.jsp:25//SAST Node #0 (input): getParameterMap (MethodInvokeExpr)//SAST Node #1: set (MethodInvokeExpr)//SAST Node #2: numguess (NumberGuessBeanReference)
 // method continues ...
@@ -346,6 +377,18 @@ const jspAndJavaCode = `<jsp:setProperty name="numguess" property="*"/>//FILE: n
     public String getHint() {//FILE: NumberGuessBean.java:48
         return "" + hint;//SAST Node #6: hint (StringReference)
 // method continues ...`
+
+const jspAndJavaCodeNLO = `<jsp:setProperty name="numguess" property="*"/>//FILE: numguess.jsp:25//SAST Node #0 (input): getParameterMap (MethodInvokeExpr)//SAST Node #1: set (MethodInvokeExpr)//SAST Node #2: numguess (NumberGuessBeanReference)
+// ...
+<% if (numguess.getSuccess()) { %>//FILE: numguess.jsp:32//SAST Node #3: numguess (NumberGuessBeanReference)
+// ...
+<% } else if (numguess.getNumGuesses() == 0) { %>//FILE: numguess.jsp:41//SAST Node #4: numguess (NumberGuessBeanReference)
+// ...
+  Good guess, but nope.  Try <b><%= numguess.getHint() %></b>.//FILE: numguess.jsp:54//SAST Node #5: numguess (NumberGuessBeanReference)//SAST Node #7 (output): getHint (MethodInvokeExpr)
+// ...
+    public String getHint() {//FILE: NumberGuessBean.java:48
+        return "" + hint;//SAST Node #6: hint (StringReference)
+// ...`
 
 const codeTwoMethodsWithSameName = `    void parseParameters() {//FILE: ApplicationHttpRequest.java:710
 
@@ -456,11 +499,44 @@ const codeTwoMethodsWithSameName = `    void parseParameters() {//FILE: Applicat
             configBase = new File(configBase, hostName);//SAST Node #17: hostName (StringReference)//SAST Node #18 (output): File (ObjectCreateExpr)
 // method continues ...`
 
+const codeTwoMethodsWithSameNameNLO = `    void parseParameters() {//FILE: ApplicationHttpRequest.java:710
+// ...
+        parameters = new ParameterMap<>(getRequest().getParameterMap());//SAST Node #0 (input): getParameterMap (MethodInvokeExpr)//SAST Node #1: ParameterMap (ObjectCreateExpr)//SAST Node #2: parameters (MapReference)
+// ...
+    public String getParameter(String name) {//FILE: ApplicationHttpRequest.java:394
+        parseParameters();//SAST Node #3: parseParameters (MethodInvokeExpr)
+// ...
+        String[] value = parameters.get(name);//SAST Node #4: parameters (MapReference)//SAST Node #5: get (MethodInvokeExpr)//SAST Node #6: value (Declarator)
+// ...
+        return value[0];//SAST Node #7: value (StringReference)
+// ...
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {//FILE: HostManagerServlet.java:163
+// ...
+        String name = request.getParameter("name");//SAST Node #8: getParameter (MethodInvokeExpr)//SAST Node #9: name (Declarator)
+// ...
+            add(request, writer, name, false, smClient);//SAST Node #10: name (StringReference)
+// ...
+    protected void add(HttpServletRequest request, PrintWriter writer, String name, boolean htmlMode,//FILE: HostManagerServlet.java:216//SAST Node #11: name (ParamDecl)
+// ...
+        add(writer, name, aliases, appBase, manager, autoDeploy, deployOnStartup, deployXML, unpackWARs, copyXML,//SAST Node #12: name (StringReference)
+// ...
+    protected synchronized void add(PrintWriter writer, String name, String aliases, String appBase, boolean manager,//FILE: HostManagerServlet.java:302//SAST Node #13: name (ParamDecl)
+// ...
+        if (name == null || name.length() == 0) {//SAST Node #14: name (StringReference)
+// ...
+        File configBaseFile = getConfigBase(name);//SAST Node #15: name (StringReference)
+// ...
+    protected File getConfigBase(String hostName) {//FILE: HostManagerServlet.java:622//SAST Node #16: hostName (ParamDecl)
+// ...
+            configBase = new File(configBase, hostName);//SAST Node #17: hostName (StringReference)//SAST Node #18 (output): File (ObjectCreateExpr)
+// ...`
+
 func TestBuildPromptForResults(t *testing.T) {
 	type args struct {
-		resultsFile string
-		resultId    string
-		sourcePath  string
+		resultsFile   string
+		resultId      string
+		sourcePath    string
+		nodeLinesOnly bool
 	}
 	tests := []struct {
 		name       string
@@ -469,32 +545,61 @@ func TestBuildPromptForResults(t *testing.T) {
 		wantUser   string
 		wantErr    error
 	}{
-		{"TestBuildPromptForResultMissingNode", args{"testdata/sast_result_missing-node.json", "c1CrCRw4/3/A6q+6zwIhShQIe1I=", "testdata/sources"},
+		{"TestBuildPromptForResultMissingNode",
+			args{"testdata/sast_result_missing-node.json", "c1CrCRw4/3/A6q+6zwIhShQIe1I=", "testdata/sources", false},
 			systemPrompt, userPrompt("Stored_XSS", 79, "Java", codeMissingNode), nil},
-		{"TestBuildPromptTwoSimilarResults1", args{"testdata/two_similar_results.json", "13893625", "testdata/sources"},
+		{"TestBuildPromptTwoSimilarResults1",
+			args{"testdata/two_similar_results.json", "13893625", "testdata/sources", false},
 			systemPrompt, userPrompt("Log_Forging", 117, "Java", codeTwoSimilarResults1), nil},
-		{"TestBuildPromptTwoSimilarResults2", args{"testdata/two_similar_results.json", "13893626", "testdata/sources"},
+		{"TestBuildPromptTwoSimilarResults2",
+			args{"testdata/two_similar_results.json", "13893626", "testdata/sources", false},
 			systemPrompt, userPrompt("Log_Forging", 117, "Java", codeTwoSimilarResults2), nil},
-		{"TestBuildPromptJspResult", args{"testdata/jsp_result.json", "vuKUhCJ5drCeY6IDB//eBu8wvkk=", "testdata/sources"},
+		{"TestBuildPromptJspResult",
+			args{"testdata/jsp_result.json", "vuKUhCJ5drCeY6IDB//eBu8wvkk=", "testdata/sources", false},
 			systemPrompt, userPrompt("LDAP_Injection", 90, "Java", jspCode), nil},
-		{"TestBuildPromptJspAndJavaResult", args{"testdata/jsp_and_java_result.json", "XrM9Lk/bjJHxLOcn4XETGHJ1ko0=", "testdata/sources"},
+		{"TestBuildPromptJspAndJavaResult",
+			args{"testdata/jsp_and_java_result.json", "XrM9Lk/bjJHxLOcn4XETGHJ1ko0=", "testdata/sources", false},
 			systemPrompt, userPrompt("Reflected_XSS_All_Clients", 79, "Java", jspAndJavaCode), nil},
-		{"TestBuildPromptTwoMethodsWithSameName", args{"testdata/two_methods_with_same_name.json", "5LcQqrUhDTZWEVCBWwMWGhSm+00=", "testdata/sources"},
+		{"TestBuildPromptTwoMethodsWithSameName",
+			args{"testdata/two_methods_with_same_name.json", "5LcQqrUhDTZWEVCBWwMWGhSm+00=", "testdata/sources", false},
 			systemPrompt, userPrompt("Input_Path_Not_Canonicalized", 73, "Java", codeTwoMethodsWithSameName), nil},
+		{"TestBuildPromptForResultMissingNodeNLO",
+			args{"testdata/sast_result_missing-node.json", "c1CrCRw4/3/A6q+6zwIhShQIe1I=", "testdata/sources", true},
+			systemPrompt, userPrompt("Stored_XSS", 79, "Java", codeMissingNodeNLO), nil},
+		{"TestBuildPromptTwoSimilarResults1NLO",
+			args{"testdata/two_similar_results.json", "13893625", "testdata/sources", true},
+			systemPrompt, userPrompt("Log_Forging", 117, "Java", codeTwoSimilarResults1NLO), nil},
+		{"TestBuildPromptTwoSimilarResults2NLO",
+			args{"testdata/two_similar_results.json", "13893626", "testdata/sources", true},
+			systemPrompt, userPrompt("Log_Forging", 117, "Java", codeTwoSimilarResults2NLO), nil},
+		{"TestBuildPromptJspResultNLO",
+			args{"testdata/jsp_result.json", "vuKUhCJ5drCeY6IDB//eBu8wvkk=", "testdata/sources", true},
+			systemPrompt, userPrompt("LDAP_Injection", 90, "Java", jspCodeNLO), nil},
+		{"TestBuildPromptJspAndJavaResultNLO",
+			args{"testdata/jsp_and_java_result.json", "XrM9Lk/bjJHxLOcn4XETGHJ1ko0=", "testdata/sources", true},
+			systemPrompt, userPrompt("Reflected_XSS_All_Clients", 79, "Java", jspAndJavaCodeNLO), nil},
+		{"TestBuildPromptTwoMethodsWithSameNameNLO",
+			args{"testdata/two_methods_with_same_name.json", "5LcQqrUhDTZWEVCBWwMWGhSm+00=", "testdata/sources", true},
+			systemPrompt, userPrompt("Input_Path_Not_Canonicalized", 73, "Java", codeTwoMethodsWithSameNameNLO), nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotSystem, gotUser, err := BuildPrompt(tt.args.resultsFile, tt.args.resultId, tt.args.sourcePath)
-			if err != nil &&
-				err.Error() != tt.wantErr.Error() {
-				t.Errorf("BuildPrompt() error = '%v', wantErr '%v'", err, tt.wantErr)
+			pb := &PromptBuilder{
+				ResultsFile:   tt.args.resultsFile,
+				SourcePath:    tt.args.sourcePath,
+				NodeLinesOnly: tt.args.nodeLinesOnly,
+			}
+			got := pb.BuildPromptForResultId(tt.args.resultId)
+			if got.Error != nil &&
+				got.Error.Error() != tt.wantErr.Error() {
+				t.Errorf("BuildPrompt() error = '%v', wantErr '%v'", got.Error, tt.wantErr)
 				return
 			}
-			if gotSystem != tt.wantSystem {
-				t.Errorf("BuildPrompt() gotSystem = '%v', want '%v'", gotSystem, tt.wantSystem)
+			if got.System != tt.wantSystem {
+				t.Errorf("BuildPrompt() gotSystem = '%v', want '%v'", got.System, tt.wantSystem)
 			}
-			if gotUser != tt.wantUser {
-				t.Errorf("BuildPrompt() gotUser = '%v', want '%v'", gotUser, tt.wantUser)
+			if got.User != tt.wantUser {
+				t.Errorf("BuildPrompt() gotUser = '%v', want '%v'", got.User, tt.wantUser)
 			}
 		})
 	}

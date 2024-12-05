@@ -132,7 +132,91 @@ func (pb *PromptBuilder) CreateUserPrompt(result *Result, sources map[string][]s
 // It iterates over the nodes in the result and collects the source lines from the nodes and the method lines.
 // It annotates the lines with the node information.
 func createSourceForPromptWithNodeLinesOnly(result *Result, sources map[string][]string) (string, error) {
-	return "", nil
+	type NodeLine struct {
+		Index int
+		Line  int
+	}
+	type MethodSpec struct {
+		Filename string
+		Name     string
+		Line     int
+	}
+	nodesInMethods := make(map[MethodSpec][]*NodeLine)
+	var methods []MethodSpec
+	var sourcePrompt []string
+	for i, node := range result.Data.Nodes {
+		sourceFilename := strings.ReplaceAll(node.FileName, "\\", "/")
+		if sources[sourceFilename] == nil {
+			return "", fmt.Errorf("source '%s' is irrelevant for analysis", sourceFilename)
+		}
+		if node.MethodLine < 1 || node.MethodLine > len(sources[sourceFilename]) {
+			return "", fmt.Errorf("method line number %d is out of range", node.MethodLine)
+		}
+		if node.Line < 1 || node.Line > len(sources[sourceFilename]) {
+			return "", fmt.Errorf("node line number %d is out of range", node.Line)
+		}
+		methodSpec := MethodSpec{Filename: sourceFilename, Name: node.Method, Line: node.MethodLine}
+		if _, exists := nodesInMethods[methodSpec]; !exists {
+			nodesInMethods[methodSpec] = []*NodeLine{}
+			methods = append(methods, methodSpec)
+		}
+		nodesInMethods[methodSpec] = append(nodesInMethods[methodSpec], &NodeLine{Index: i, Line: node.Line})
+	}
+	for _, m := range methods {
+		lineNumbers := nodesInMethods[m]
+		sort.Slice(lineNumbers, func(i, j int) bool {
+			return lineNumbers[i].Line < lineNumbers[j].Line
+		})
+		sourcePrompt = append(sourcePrompt, fmt.Sprintf("%s//FILE: %s:%d", sources[m.Filename][m.Line-1], m.Filename, m.Line))
+		for i := 0; i < len(lineNumbers); i++ {
+			index := lineNumbers[i].Index
+			line := lineNumbers[i].Line
+			node := result.Data.Nodes[index]
+
+			var edge string
+			if index == 0 {
+				edge = " (input)"
+			} else if index == len(result.Data.Nodes)-1 {
+				edge = " (output)"
+			} else {
+				edge = ""
+			}
+
+			// change UnknownReference to something more informational like VariableReference or TypeNameReference
+			nodeType := node.DomType
+			if node.DomType == "UnknownReference" {
+				if node.TypeName == "" {
+					nodeType = "VariableReference"
+				} else {
+					nodeType = node.TypeName + "Reference"
+				}
+			}
+
+			if i == 0 {
+				if line != m.Line {
+					if line-m.Line > 1 {
+						sourcePrompt = append(sourcePrompt, "// ...")
+					}
+					sourcePrompt = append(sourcePrompt, sources[m.Filename][line-1]+
+						fmt.Sprintf("//SAST Node #%d%s: %s (%s)", index, edge, node.Name, nodeType))
+				} else {
+					sourcePrompt[len(sourcePrompt)-1] += fmt.Sprintf("//SAST Node #%d%s: %s (%s)", index, edge, node.Name, nodeType)
+				}
+			} else {
+				if line != lineNumbers[i-1].Line {
+					if line-lineNumbers[i-1].Line > 1 {
+						sourcePrompt = append(sourcePrompt, "// ...")
+					}
+					sourcePrompt = append(sourcePrompt, sources[m.Filename][lineNumbers[i].Line-1]+
+						fmt.Sprintf("//SAST Node #%d%s: %s (%s)", index, edge, node.Name, nodeType))
+				} else {
+					sourcePrompt[len(sourcePrompt)-1] += fmt.Sprintf("//SAST Node #%d%s: %s (%s)", index, edge, node.Name, nodeType)
+				}
+			}
+		}
+		sourcePrompt = append(sourcePrompt, "// ...")
+	}
+	return strings.Join(sourcePrompt, "\n"), nil
 }
 
 // createSourceForPrompt creates the comment-annotated source snippet for the SAST prompt.

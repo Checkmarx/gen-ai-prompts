@@ -10,17 +10,18 @@ import (
 )
 
 const (
-	SastResultType string = "sast-result"
-	promptTypes    string = "sast-result"
+	sastResult      string = "sast-result"
+	sastResultNodes string = "sast-result-nodes"
+	promptTypes     string = sastResult + ", " + sastResultNodes
 )
 
 const usage = `
 Create an OpenAI prompt for SAST result remediation
 
-Usage: prompt [-p sast-result] -s <sourcePath> -r <resultsFile> [options]
+Usage: prompt [-p ` + sastResult + `] -s <sourcePath> -r <resultsFile> [options]
 
 Options:
-    -p,  --prompt <promptType>    Specify the type of prompt to generate [` + promptTypes + `] (default: sast-result)
+    -p,  --prompt <promptType>    Specify the type of prompt to generate [` + promptTypes + `] (default: ` + sastResult + `)
     -s,  --source <sourcePath>    Specify where the sources are located.
     -r,  --results <resultsFile>  Specify the SAST results file to use. 
     -ri, --result-id <result-id>  Specify which result to use.
@@ -36,6 +37,7 @@ var resultId string = ""
 var resultsListFile string = ""
 var query string = ""
 var language string = ""
+var nodeLinesOnly bool = false
 
 func main() {
 
@@ -76,7 +78,8 @@ func main() {
 		flag.Usage()
 	}
 
-	if promptType != SastResultType {
+	if promptType != sastResult &&
+		promptType != sastResultNodes {
 		fmt.Printf("Invalid prompt type '%s'. Must be one of ['%s']\n", promptType, promptTypes)
 		os.Exit(1)
 	}
@@ -88,11 +91,13 @@ func buildPrompts(promptType string) {
 
 	switch promptType {
 	case "sast-result":
-		buildSastResultPrompts()
+		buildSastResultPrompts(false)
+	case "sast-result-nodes":
+		buildSastResultPrompts(true)
 	}
 }
 
-func buildSastResultPrompts() {
+func buildSastResultPrompts(nodeLinesOnly bool) {
 	if resultsFile == "" && resultId == "" && sourcePath == "" && resultsListFile == "" {
 		flag.Usage()
 	}
@@ -108,7 +113,7 @@ func buildSastResultPrompts() {
 	pb := &sastchat.PromptBuilder{
 		ResultsFile:   resultsFile,
 		SourcePath:    sourcePath,
-		NodeLinesOnly: false,
+		NodeLinesOnly: nodeLinesOnly,
 	}
 
 	if resultId != "" {
