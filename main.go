@@ -105,10 +105,16 @@ func buildSastResultPrompts() {
 		os.Exit(1)
 	}
 
+	pb := &sastchat.PromptBuilder{
+		ResultsFile:   resultsFile,
+		SourcePath:    sourcePath,
+		NodeLinesOnly: false,
+	}
+
 	if resultId != "" {
-		buildPromptForResult(resultsFile, resultId, sourcePath)
+		buildPromptForResult(pb, resultId)
 	} else if resultsListFile != "" {
-		buildPromptsForResultList(resultsFile, resultsListFile, sourcePath)
+		buildPromptsForResultList(pb, resultsListFile)
 	} else if query != "" {
 		parts := strings.Split(query, ":")
 		if len(parts) != 2 {
@@ -117,17 +123,17 @@ func buildSastResultPrompts() {
 		}
 		language = parts[0]
 		query = parts[1]
-		buildPromptsForLanguageAndQuery(resultsFile, language, query, sourcePath)
+		buildPromptsForLanguageAndQuery(pb, language, query)
 	} else if language != "" {
-		buildPromptsForLanguageAndQuery(resultsFile, language, "*", sourcePath)
+		buildPromptsForLanguageAndQuery(pb, language, "*")
 	} else {
-		buildPromptsForLanguageAndQuery(resultsFile, "*", "*", sourcePath)
+		buildPromptsForLanguageAndQuery(pb, "*", "*")
 	}
 }
 
-func buildPromptsForLanguageAndQuery(resultsFile, language, query, sourcePath string) {
+func buildPromptsForLanguageAndQuery(pb *sastchat.PromptBuilder, language, query string) {
 	var prompts []*sastchat.SastResultPrompt
-	prompts = sastchat.BuildPromptsForLanguageAndQuery(resultsFile, language, query, sourcePath)
+	prompts = pb.BuildPromptsForLanguageAndQuery(language, query)
 	for _, prompt := range prompts {
 		if prompt.Error != nil {
 			fmt.Printf("Error building SAST result prompt for result ID '%s': %v\n", prompt.ResultId, prompt.Error)
@@ -140,8 +146,8 @@ func buildPromptsForLanguageAndQuery(resultsFile, language, query, sourcePath st
 	}
 }
 
-func buildPromptForResult(resultsFile, resultId, sourcePath string) {
-	prompt := sastchat.BuildPromptForResultId(resultsFile, resultId, sourcePath)
+func buildPromptForResult(pb *sastchat.PromptBuilder, resultId string) {
+	prompt := pb.BuildPromptForResultId(resultId)
 	if prompt.Error != nil {
 		fmt.Printf("Error building SAST result prompt for result ID '%s': %v\n", resultId, prompt.Error)
 		os.Exit(1)
@@ -152,8 +158,8 @@ func buildPromptForResult(resultsFile, resultId, sourcePath string) {
 	fmt.Printf("User Prompt:\n\n%s\n\n", prompt.User)
 }
 
-func buildPromptsForResultList(resultsFile, resultsListFile, sourcePath string) {
-	prompts := sastchat.BuildPromptsForResultsList(resultsFile, resultsListFile, sourcePath)
+func buildPromptsForResultList(pb *sastchat.PromptBuilder, resultsListFile string) {
+	prompts := pb.BuildPromptsForResultsList(resultsListFile)
 	for _, prompt := range prompts {
 		if prompt.Error != nil {
 			fmt.Printf("Error building SAST result prompt for result ID '%s': %v\n", prompt.ResultId, prompt.Error)

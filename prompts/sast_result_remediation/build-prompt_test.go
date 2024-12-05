@@ -148,7 +148,12 @@ func TestBuildPromptsForLanguageAndQuery(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := BuildPromptsForLanguageAndQuery(tt.args.resultsFile, tt.args.language, tt.args.query, tt.args.sourcePath)
+			pb := &PromptBuilder{
+				ResultsFile:   tt.args.resultsFile,
+				SourcePath:    tt.args.sourcePath,
+				NodeLinesOnly: false,
+			}
+			got := pb.BuildPromptsForLanguageAndQuery(tt.args.language, tt.args.query)
 			if len(got) != len(tt.want) {
 				t.Errorf("BuildPromptsForLanguageAndQuery() got = %v, want %v", got, tt.want)
 				return
@@ -207,7 +212,12 @@ func TestBuildPromptsForResultsList(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := BuildPromptsForResultsList(tt.args.resultsFile, tt.args.resultsListFile, tt.args.sourcePath)
+			pb := &PromptBuilder{
+				ResultsFile:   tt.args.resultsFile,
+				SourcePath:    tt.args.sourcePath,
+				NodeLinesOnly: false,
+			}
+			got := pb.BuildPromptsForResultsList(tt.args.resultsListFile)
 			if len(got) != len(tt.want) {
 				t.Errorf("BuildPromptsForLanguageAndQuery() got = %v, want %v", got, tt.want)
 				return

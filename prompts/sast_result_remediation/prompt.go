@@ -81,7 +81,7 @@ type ParsedResponse struct {
 	Introduction string
 }
 
-func CreatePromptsForResults(results []*Result, cleanSources map[string][]string, promptTemplate *SastResultPrompt) []*SastResultPrompt {
+func (pb *PromptBuilder) CreatePromptsForResults(results []*Result, cleanSources map[string][]string, promptTemplate *SastResultPrompt) []*SastResultPrompt {
 	var prompts []*SastResultPrompt
 	for _, result := range results {
 		prompt := &SastResultPrompt{
@@ -93,7 +93,7 @@ func CreatePromptsForResults(results []*Result, cleanSources map[string][]string
 		}
 		prompt.System = GetSystemPrompt()
 		sources := copyCleanSources(cleanSources)
-		prompt.User, prompt.Error = CreateUserPrompt(result, sources)
+		prompt.User, prompt.Error = pb.CreateUserPrompt(result, sources)
 		prompts = append(prompts, prompt)
 	}
 	return prompts
@@ -111,12 +111,28 @@ func GetSystemPrompt() string {
 	return systemPrompt
 }
 
-func CreateUserPrompt(result *Result, sources map[string][]string) (string, error) {
-	promptSource, err := createSourceForPrompt(result, sources)
-	if err != nil {
-		return "", err
+func (pb *PromptBuilder) CreateUserPrompt(result *Result, sources map[string][]string) (string, error) {
+	var promptSource string
+	var err error
+	if pb.NodeLinesOnly {
+		promptSource, err = createSourceForPromptWithNodeLinesOnly(result, sources)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		promptSource, err = createSourceForPrompt(result, sources)
+		if err != nil {
+			return "", err
+		}
 	}
 	return fmt.Sprintf(userPromptTemplate, result.Data.QueryName, result.VulnerabilityDetails.CweID, result.Data.LanguageName, promptSource), nil
+}
+
+// createSourceForPromptWithNodeLinesOnly creates the comment-annotated source snippet for the SAST prompt.
+// It iterates over the nodes in the result and collects the source lines from the nodes and the method lines.
+// It annotates the lines with the node information.
+func createSourceForPromptWithNodeLinesOnly(result *Result, sources map[string][]string) (string, error) {
+	return "", nil
 }
 
 // createSourceForPrompt creates the comment-annotated source snippet for the SAST prompt.
