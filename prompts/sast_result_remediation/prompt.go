@@ -31,7 +31,7 @@ const (
 // This constant is used to format the identifiers (confidence, explanation, fix) and their descriptions with HTML tags
 const identifierTitleFormat = "<span style=\"color: regular;\">%s</span><span style=\"color: grey; font-style: italic;\">%s</span>"
 
-const userPromptTemplate = `Checkmarx Static Application Security Testing (SAST) detected the %s vulnerability (CWE-%d) within the provided %s code snippet. 
+const userPromptTemplate = `Checkmarx Static Application Security Testing (SAST) detected a vulnerability within the provided code snippet. The vulnerability details are provided under the title **VULNERABILITY**. 
 The attack vector is presented by a code snippet annotated by comments. There are two types of annotations:
 1. Attack vector nodes: in the form ` + "`//SAST Node #X: element (element-type)`" + ` where X is the node index in the result, ` + "`element`" + ` is the name of the element through which the data flows, and the ` + "`element-type`" + ` is it's type. First and Last nodes are indicated by additional ` + "`(input)`" + ` and ` + "`(output)`" + ` respectively. 	
 2. Method definitions: are annotated by a comment of the form ` + "`//FILE: /file-path/file-name:line`" + ` indicating its ` + "`file-path`" + `, ` + "`file-name`" + ` and ` + "`line`" + ` where the method begins.
@@ -67,6 +67,9 @@ Your analysis MUST be presented in the following format:
 	` short_text
 ` + "\n" + bold + fix + bold +
 	` fixed_snippet
+
+**VULNERABILITY**
+Name: %s, CWE: %d, Language: %s
 
 **CODE TO REVIEW**
 IMPORTANT: pay special attention to the ANNOTATED LINES in the following code, they provide important details regarding the vulnerability and the relevance of code to production or other environments.
