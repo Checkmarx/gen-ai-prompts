@@ -8,6 +8,7 @@ type SastResultPrompt struct {
 	ResultsFile string
 	Language    string
 	Query       string
+	Severity    string
 	ResultId    string
 	SourcePath  string
 	System      string
@@ -82,6 +83,7 @@ func (pb *PromptBuilder) BuildPromptsForResultsList(resultsListFile string) []*S
 func (pb *PromptBuilder) BuildPromptFromResult(result *Result) *SastResultPrompt {
 	prompt := pb.initPrompt(result.Data.LanguageName, result.Data.QueryName)
 	prompt.ResultId = result.ID
+	prompt.Severity = result.Severity
 	sources, err := pb.GetSourcesForResult(result)
 	if err != nil {
 		prompt.Error = fmt.Errorf("error getting sources for result ID '%s': '%v'", result.ID, err)
