@@ -93,6 +93,7 @@ func (pb *PromptBuilder) CreatePromptsForResults(results []*Result, cleanSources
 			Language:    result.Data.LanguageName,
 			Query:       result.Data.QueryName,
 			ResultId:    result.ID,
+			Severity:    result.Severity,
 		}
 		prompt.System = GetSystemPrompt()
 		sources := copyCleanSources(cleanSources)
