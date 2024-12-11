@@ -12,7 +12,8 @@ import (
 const (
 	sastResult      string = "sast-result"
 	sastResultNodes string = "sast-result-nodes"
-	promptTypes     string = sastResult + ", " + sastResultNodes
+	sastResultExtra string = "sast-result-extra"
+	promptTypes     string = sastResult + ", " + sastResultNodes + ", " + sastResultExtra
 )
 
 const usage = `
@@ -21,7 +22,7 @@ Create an OpenAI prompt for SAST result remediation
 Usage: prompt [-p ` + sastResult + `] -s <sourcePath> -r <resultsFile> [options]
 
 Options:
-    -p,  --prompt <promptType>    Specify the type of prompt to generate [` + promptTypes + `] (default: ` + sastResult + `)
+    -p,  --prompt <promptType>    Specify the type of prompt to generate [` + promptTypes + `] (default: ` + sastResultNodes + `)
     -s,  --source <sourcePath>    Specify where the sources are located.
     -r,  --results <resultsFile>  Specify the SAST results file to use. 
     -ri, --result-id <result-id>  Specify which result to use.
@@ -90,10 +91,11 @@ func main() {
 func buildPrompts(promptType string) {
 
 	switch promptType {
-	case "sast-result":
-		buildSastResultPrompts(false)
-	case "sast-result-nodes":
+	case sastResult:
+	case sastResultNodes:
 		buildSastResultPrompts(true)
+	case sastResultExtra:
+		buildSastResultPrompts(false)
 	}
 }
 
