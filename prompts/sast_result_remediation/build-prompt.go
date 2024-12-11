@@ -26,7 +26,7 @@ func BuildPrompt(resultsFile string, resultId string, sourcePath string) (system
 	pb := &PromptBuilder{
 		ResultsFile:   resultsFile,
 		SourcePath:    sourcePath,
-		NodeLinesOnly: false,
+		NodeLinesOnly: true,
 	}
 	prompt := pb.BuildPromptForResultId(resultId)
 	return prompt.System, prompt.User, prompt.Error
