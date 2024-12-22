@@ -91,8 +91,7 @@ func main() {
 func buildPrompts(promptType string) {
 
 	switch promptType {
-	case sastResult:
-	case sastResultNodes:
+	case sastResult, sastResultNodes:
 		buildSastResultPrompts(true)
 	case sastResultExtra:
 		buildSastResultPrompts(false)
