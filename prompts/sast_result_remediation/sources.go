@@ -13,9 +13,19 @@ func (pb *PromptBuilder) GetSourcesForResults(results []*Result) (map[string][]s
 		getFilenamesForResult(result, sourceFilenames)
 	}
 
-	fileContents, err := pb.GetFileContents(sourceFilenames)
-	if err != nil {
-		return nil, err
+	fileContents := make(map[string][]string)
+	for filename, load := range sourceFilenames {
+		if !load {
+			fileContents[filename] = nil
+			continue
+		}
+		lines, err := pb.GetFileContents(filename)
+		if err != nil || lines == nil || len(lines) <= 1 {
+			sourceFilenames[filename] = false
+			fileContents[filename] = nil
+		} else {
+			fileContents[filename] = lines
+		}
 	}
 
 	return fileContents, nil
@@ -26,39 +36,29 @@ func (pb *PromptBuilder) GetSourcesForResult(result *Result) (map[string][]strin
 	return pb.GetSourcesForResults(results)
 }
 
-func (pb *PromptBuilder) GetFileContents(filenames map[string]bool) (map[string][]string, error) {
-	fileContents := make(map[string][]string)
-
-	for filename, load := range filenames {
-		if !load {
-			fileContents[filename] = nil
-			continue
-		}
-		sourceFilename := filepath.Join(pb.SourcePath, filename)
-		file, err := os.Open(sourceFilename)
-		if err != nil {
-			return nil, err
-		}
-
-		scanner := bufio.NewScanner(file)
-		var lines []string
-		for scanner.Scan() {
-			lines = append(lines, scanner.Text())
-		}
-
-		err = file.Close()
-		if err != nil {
-			return nil, err
-		}
-
-		if err := scanner.Err(); err != nil {
-			return nil, err
-		}
-
-		fileContents[filename] = lines
+func (pb *PromptBuilder) GetFileContents(filename string) ([]string, error) {
+	sourceFilename := filepath.Join(pb.SourcePath, filename)
+	file, err := os.Open(sourceFilename)
+	if err != nil {
+		return nil, err
 	}
 
-	return fileContents, nil
+	scanner := bufio.NewScanner(file)
+	var lines []string
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+
+	err = file.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return lines, err
 }
 
 func getFilenamesForResult(result *Result, sourceFilenames map[string]bool) {
