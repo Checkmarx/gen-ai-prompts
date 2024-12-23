@@ -2,6 +2,7 @@ package sast_result_remediation
 
 import (
 	"bufio"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -43,22 +44,30 @@ func (pb *PromptBuilder) GetFileContents(filename string) ([]string, error) {
 		return nil, err
 	}
 
-	scanner := bufio.NewScanner(file)
+	reader := bufio.NewReader(file)
 	var lines []string
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
+
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				// Add the last line if it doesn't end with a newline
+				if len(line) > 0 {
+					lines = append(lines, line)
+				}
+				break
+			}
+			return nil, err
+		}
+		lines = append(lines, line)
 	}
 
 	err = file.Close()
 	if err != nil {
-		return nil, err
+		return lines, err
 	}
 
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-
-	return lines, err
+	return lines, nil
 }
 
 func getFilenamesForResult(result *Result, sourceFilenames map[string]bool) {
