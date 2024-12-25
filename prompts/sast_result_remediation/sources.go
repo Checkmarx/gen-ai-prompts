@@ -49,6 +49,7 @@ func (pb *PromptBuilder) GetFileContents(filename string) ([]string, error) {
 
 	for {
 		line, err := reader.ReadString('\n')
+		line = strings.TrimRight(line, "\n")
 		if err != nil {
 			if err == io.EOF {
 				// Add the last line if it doesn't end with a newline
