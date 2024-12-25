@@ -31,12 +31,12 @@ const (
 // This constant is used to format the identifiers (confidence, explanation, fix) and their descriptions with HTML tags
 const identifierTitleFormat = "<span style=\"color: regular;\">%s</span><span style=\"color: grey; font-style: italic;\">%s</span>"
 
-const userPromptTemplate = `Checkmarx Static Application Security Testing (SAST) detected a vulnerability within the provided code snippet. The vulnerability details are provided under the title **VULNERABILITY**. 
+const userPromptTemplate = `Checkmarx Static Application Security Testing (SAST) detected a vulnerability within the provided code snippet. The vulnerability details are provided under the title 'VULNERABILITY'. 
 The attack vector is presented by a code snippet annotated by comments. There are two types of annotations:
 1. Attack vector nodes: in the form ` + "`//SAST Node #X: element (element-type)`" + ` where X is the node index in the result, ` + "`element`" + ` is the name of the element through which the data flows, and the ` + "`element-type`" + ` is it's type. First and Last nodes are indicated by additional ` + "`(input)`" + ` and ` + "`(output)`" + ` respectively. 	
 2. Method definitions: are annotated by a comment of the form ` + "`//FILE: /file-path/file-name:line`" + ` indicating its ` + "`file-path`" + `, ` + "`file-name`" + ` and ` + "`line`" + ` where the method begins.
 An annotation comment can have multiple annotations. 
-The code to review is at the end under the title **CODE TO REVIEW**.
+The code to review is at the end under the title 'CODE TO REVIEW'.
 
 Please review the code below and provide a confidence score ranging from 0 to 100.
 A score of 0 means you believe the result is completely incorrect, unexploitable, and a false positive.
@@ -61,6 +61,7 @@ Please provide a brief explanation for your confidence score, don't mention all 
 Next, please provide code that remediates the vulnerability so that a developer can copy paste instead of the snippet above.
 
 Your analysis MUST be presented in the following format:
+
 ` + bold + confidence + bold +
 	` number
 ` + "\n" + bold + explanation + bold +
@@ -68,10 +69,13 @@ Your analysis MUST be presented in the following format:
 ` + "\n" + bold + fix + bold +
 	` fixed_snippet
 
-**VULNERABILITY**
+end-of-output
+
+Details:
+VULNERABILITY
 Name: %s, CWE: %d, Language: %s
 
-**CODE TO REVIEW**
+CODE TO REVIEW
 IMPORTANT: pay special attention to the ANNOTATED LINES in the following code, they provide important details regarding the vulnerability and the relevance of code to production or other environments.
 ` + code + `
 %s
