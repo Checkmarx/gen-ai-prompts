@@ -2,38 +2,47 @@ package sast_result_remediation
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-func (pb *PromptBuilder) GetSourcesForResults(results []*Result) (map[string][]string, error) {
-	sourceFilenames := make(map[string]bool)
+type SourceAndError struct {
+	Source []string
+	Error  error
+}
+
+func (pb *PromptBuilder) GetSourcesForResults(results []*Result) map[string]*SourceAndError {
+	sourceFilenames := make(map[string]error)
 	for _, result := range results {
 		getFilenamesForResult(result, sourceFilenames)
 	}
 
-	fileContents := make(map[string][]string)
-	for filename, load := range sourceFilenames {
-		if !load {
-			fileContents[filename] = nil
+	fileContents := make(map[string]*SourceAndError)
+	for filename, err := range sourceFilenames {
+		if err != nil {
+			fileContents[filename] = &SourceAndError{Source: nil, Error: err}
 			continue
 		}
 		lines, err := pb.GetFileContents(filename)
 		if err != nil || lines == nil || len(lines) <= 1 {
-			sourceFilenames[filename] = false
-			fileContents[filename] = nil
+			if err == nil {
+				err = fmt.Errorf("file '%s' has irrelevant content", filename)
+			}
+			sourceFilenames[filename] = err
+			fileContents[filename] = &SourceAndError{Source: nil, Error: err}
 		} else {
-			fileContents[filename] = lines
+			fileContents[filename] = &SourceAndError{Source: lines, Error: nil}
 		}
 	}
 
-	return fileContents, nil
+	return fileContents
 }
 
-func (pb *PromptBuilder) GetSourcesForResult(result *Result) (map[string][]string, error) {
-	var results []*Result = []*Result{result}
+func (pb *PromptBuilder) GetSourcesForResult(result *Result) map[string]*SourceAndError {
+	results := []*Result{result}
 	return pb.GetSourcesForResults(results)
 }
 
@@ -71,26 +80,26 @@ func (pb *PromptBuilder) GetFileContents(filename string) ([]string, error) {
 	return lines, nil
 }
 
-func getFilenamesForResult(result *Result, sourceFilenames map[string]bool) {
+func getFilenamesForResult(result *Result, sourceFilenames map[string]error) {
 	for _, node := range result.Data.Nodes {
 		sourceFilename := strings.ReplaceAll(node.FileName, "\\", "/")
 		sourceFilenames[sourceFilename] = isResultRelevantForAnalysis(result, sourceFilename)
 	}
 }
 
-func isResultRelevantForAnalysis(result *Result, filename string) bool {
+func isResultRelevantForAnalysis(result *Result, filename string) error {
 	var blacklistedExtensionsByLanguage = map[string][]string{
 		"JavaScript": []string{".min.js", "-min.js"},
 	}
 
 	extensions, exists := blacklistedExtensionsByLanguage[result.Data.LanguageName]
 	if !exists {
-		return true
+		return nil
 	}
 	for _, ext := range extensions {
 		if strings.HasSuffix(filename, ext) {
-			return false
+			return fmt.Errorf("blacklisted extension: %s", ext)
 		}
 	}
-	return true
+	return nil
 }

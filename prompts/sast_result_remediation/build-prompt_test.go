@@ -60,21 +60,26 @@ func TestBuildPrompt(t *testing.T) {
 		{"TestBuildPromptResultIdNotFound", args{"testdata/cx_result.json", "invalidResultId", "testdata/sources"},
 			"", "", fmt.Errorf("error getting result for result ID 'invalidResultId': 'result ID invalidResultId not found'")},
 		{"TestBuildPromptSourcesNotFound", args{"testdata/cx_result.json", "13588507", "invalidSources"},
-			"", "", fmt.Errorf("error getting sources for result ID '13588507': 'open invalidSources/SqlInjectionLesson3.java: no such file or directory'")},
+			systemPrompt, "", fmt.Errorf("error creating prompt for result ID '13588507': 'error getting method 'completed': error reading source 'SqlInjectionLesson3.java': open invalidSources/SqlInjectionLesson3.java: no such file or directory'")},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotSystem, gotUser, err := BuildPrompt(tt.args.resultsFile, tt.args.resultId, tt.args.sourcePath)
-			if err != nil &&
-				err.Error() != tt.wantErr.Error() {
-				t.Errorf("BuildPrompt() error = %v, wantErr %v", err, tt.wantErr)
+			pb := &PromptBuilder{
+				ResultsFile:   tt.args.resultsFile,
+				SourcePath:    tt.args.sourcePath,
+				NodeLinesOnly: false,
+			}
+			got := pb.BuildPromptForResultId(tt.args.resultId)
+			if got.Error != nil &&
+				got.Error.Error() != tt.wantErr.Error() {
+				t.Errorf("BuildPrompt() error = %v, wantErr %v", got.Error, tt.wantErr)
 				return
 			}
-			if gotSystem != tt.wantSystem {
-				t.Errorf("BuildPrompt() gotSystem = %v, want %v", gotSystem, tt.wantSystem)
+			if got.System != tt.wantSystem {
+				t.Errorf("BuildPrompt() gotSystem = %v, want %v", got.System, tt.wantSystem)
 			}
-			if gotUser != tt.wantUser {
-				t.Errorf("BuildPrompt() gotUser = %v, want %v", gotUser, tt.wantUser)
+			if got.User != tt.wantUser {
+				t.Errorf("BuildPrompt() gotUser = %v, want %v", got.User, tt.wantUser)
 			}
 		})
 	}
@@ -141,7 +146,7 @@ func TestBuildPromptsForLanguageAndQuery(t *testing.T) {
 					Query:       "Client_DOM_Open_Redirect",
 					System:      systemPrompt,
 					User:        "",
-					Error:       fmt.Errorf("error getting method Cxd39430bd: source '/backbone-min.js' is irrelevant for analysis"),
+					Error:       fmt.Errorf("error getting method 'Cxd39430bd': error reading source '/backbone-min.js': blacklisted extension: -min.js"),
 				},
 			},
 		},

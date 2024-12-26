@@ -72,11 +72,7 @@ func (pb *PromptBuilder) BuildPromptsForResultsList(resultsListFile string) []*S
 		prompts[0].Error = fmt.Errorf("error getting results from results list file '%s': '%v'", resultsListFile, err)
 		return prompts
 	}
-	cleanSources, err := pb.GetSourcesForResults(results)
-	if err != nil {
-		prompts[0].Error = fmt.Errorf("error getting sources for results list file '%s': '%v'", resultsListFile, err)
-		return prompts
-	}
+	cleanSources := pb.GetSourcesForResults(results)
 	return pb.CreatePromptsForResults(results, cleanSources, prompt)
 }
 
@@ -84,13 +80,9 @@ func (pb *PromptBuilder) BuildPromptFromResult(result *Result) *SastResultPrompt
 	prompt := pb.initPrompt(result.Data.LanguageName, result.Data.QueryName)
 	prompt.ResultId = result.ID
 	prompt.Severity = result.Severity
-	sources, err := pb.GetSourcesForResult(result)
-	if err != nil {
-		prompt.Error = fmt.Errorf("error getting sources for result ID '%s': '%v'", result.ID, err)
-		return prompt
-	}
-
+	sources := pb.GetSourcesForResult(result)
 	prompt.System = GetSystemPrompt()
+	var err error
 	prompt.User, err = pb.CreateUserPrompt(result, sources)
 	if err != nil {
 		prompt.Error = fmt.Errorf("error creating prompt for result ID '%s': '%v'", result.ID, err)
@@ -123,12 +115,7 @@ func (pb *PromptBuilder) BuildPromptsFromResultsForLanguageAndQuery(results []*R
 		prompts[0].Error = fmt.Errorf("error reading and parsing SAST results file '%s': '%v'\n", pb.ResultsFile, err)
 		return prompts
 	}
-	cleanSources, err := pb.GetSourcesForResults(results)
-	if err != nil {
-		prompts[0].Error = fmt.Errorf("error getting sources for language '%s' and query '%s': '%v'", language, query, err)
-		return prompts
-	}
-
+	cleanSources := pb.GetSourcesForResults(results)
 	return pb.CreatePromptsForResults(results, cleanSources, prompt)
 }
 
