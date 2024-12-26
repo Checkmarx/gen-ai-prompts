@@ -17,6 +17,14 @@ const userPromptCode = `  public AttackResult completed(@RequestParam String que
         statement.executeUpdate(query);//SAST Node #3: query (StringReference)//SAST Node #4 (output): executeUpdate (MethodInvokeExpr)
 // method continues ...`
 
+const userPromptCodeNodeLinesOnly = `  public AttackResult completed(@RequestParam String query) {//FILE: SqlInjectionLesson3.java:53//SAST Node #0 (input): query (ParamDecl)
+    return injectableQuery(query);//SAST Node #1: query (StringReference)
+// ...
+  protected AttackResult injectableQuery(String query) {//FILE: SqlInjectionLesson3.java:57//SAST Node #2: query (ParamDecl)
+// ...
+        statement.executeUpdate(query);//SAST Node #3: query (StringReference)//SAST Node #4 (output): executeUpdate (MethodInvokeExpr)
+// ...`
+
 const userPromptCode2 = `  public AttackResult completed(@RequestParam String query) {//FILE: SqlInjectionLesson2.java:58//SAST Node #0 (input): query (ParamDecl)
     return injectableQuery(query);//SAST Node #1: query (StringReference)
 // method continues ...
@@ -54,12 +62,52 @@ func TestBuildPrompt(t *testing.T) {
 		wantErr    error
 	}{
 		{"TestBuildPromptHappy", args{"testdata/cx_result.json", "13588507", "testdata/sources"},
-			systemPrompt, userPrompt("SQL_Injection", 89, "Java", userPromptCode), nil},
+			systemPrompt, userPrompt("SQL_Injection", 89, "Java", userPromptCodeNodeLinesOnly), nil},
 		{"TestBuildPromptFileNotFound", args{"invalidFile", "13588507", "testdata/sources"},
 			"", "", fmt.Errorf("error reading and parsing SAST results file 'invalidFile': 'open invalidFile: no such file or directory'")},
 		{"TestBuildPromptResultIdNotFound", args{"testdata/cx_result.json", "invalidResultId", "testdata/sources"},
 			"", "", fmt.Errorf("error getting result for result ID 'invalidResultId': 'result ID invalidResultId not found'")},
 		{"TestBuildPromptSourcesNotFound", args{"testdata/cx_result.json", "13588507", "invalidSources"},
+			systemPrompt, "", fmt.Errorf("error creating prompt for result ID '13588507': 'error reading source 'SqlInjectionLesson3.java': 'open invalidSources/SqlInjectionLesson3.java: no such file or directory''")},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotSystem, gotUser, gotError := BuildPrompt(tt.args.resultsFile, tt.args.resultId, tt.args.sourcePath)
+			if gotError != nil &&
+				gotError.Error() != tt.wantErr.Error() {
+				t.Errorf("BuildPrompt() error = %v, wantErr %v", gotError, tt.wantErr)
+				return
+			}
+			if gotSystem != tt.wantSystem {
+				t.Errorf("BuildPrompt() gotSystem = %v, want %v", gotSystem, tt.wantSystem)
+			}
+			if gotUser != tt.wantUser {
+				t.Errorf("BuildPrompt() gotUser = %v, want %v", gotUser, tt.wantUser)
+			}
+		})
+	}
+}
+
+func TestBuildPromptForResultIdNodeLinesOnly(t *testing.T) {
+	type args struct {
+		resultsFile string
+		resultId    string
+		sourcePath  string
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantSystem string
+		wantUser   string
+		wantErr    error
+	}{
+		{"TestBuildPromptForResultIdAllLinesHappy", args{"testdata/cx_result.json", "13588507", "testdata/sources"},
+			systemPrompt, userPrompt("SQL_Injection", 89, "Java", userPromptCode), nil},
+		{"TestBuildPromptForResultIdAllLinesFileNotFound", args{"invalidFile", "13588507", "testdata/sources"},
+			"", "", fmt.Errorf("error reading and parsing SAST results file 'invalidFile': 'open invalidFile: no such file or directory'")},
+		{"TestBuildPromptForResultIdAllLinesResultIdNotFound", args{"testdata/cx_result.json", "invalidResultId", "testdata/sources"},
+			"", "", fmt.Errorf("error getting result for result ID 'invalidResultId': 'result ID invalidResultId not found'")},
+		{"TestBuildPromptForResultIdAllLinesSourcesNotFound", args{"testdata/cx_result.json", "13588507", "invalidSources"},
 			systemPrompt, "", fmt.Errorf("error creating prompt for result ID '13588507': 'error getting method 'completed': error reading source 'SqlInjectionLesson3.java': open invalidSources/SqlInjectionLesson3.java: no such file or directory'")},
 	}
 	for _, tt := range tests {
@@ -72,14 +120,14 @@ func TestBuildPrompt(t *testing.T) {
 			got := pb.BuildPromptForResultId(tt.args.resultId)
 			if got.Error != nil &&
 				got.Error.Error() != tt.wantErr.Error() {
-				t.Errorf("BuildPrompt() error = %v, wantErr %v", got.Error, tt.wantErr)
+				t.Errorf("BuildPromptForResultId() error = %v, wantErr %v", got.Error, tt.wantErr)
 				return
 			}
 			if got.System != tt.wantSystem {
-				t.Errorf("BuildPrompt() gotSystem = %v, want %v", got.System, tt.wantSystem)
+				t.Errorf("BuildPromptForResultId() gotSystem = %v, want %v", got.System, tt.wantSystem)
 			}
 			if got.User != tt.wantUser {
-				t.Errorf("BuildPrompt() gotUser = %v, want %v", got.User, tt.wantUser)
+				t.Errorf("BuildPromptForResultId() gotUser = %v, want %v", got.User, tt.wantUser)
 			}
 		})
 	}

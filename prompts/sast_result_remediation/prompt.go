@@ -156,8 +156,8 @@ func createSourceForPromptWithNodeLinesOnly(result *Result, sources map[string]*
 	var sourcePrompt []string
 	for i, node := range result.Data.Nodes {
 		sourceFilename := strings.ReplaceAll(node.FileName, "\\", "/")
-		if sources[sourceFilename] == nil {
-			return "", fmt.Errorf("source '%s' is irrelevant for analysis", sourceFilename)
+		if sources[sourceFilename].Error != nil {
+			return "", fmt.Errorf("error reading source '%s': '%v'", sourceFilename, sources[sourceFilename].Error)
 		}
 		if node.MethodLine < 1 || node.MethodLine > len(sources[sourceFilename].Source) {
 			return "", fmt.Errorf("method line number %d is out of range", node.MethodLine)
