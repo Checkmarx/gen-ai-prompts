@@ -88,7 +88,7 @@ type ParsedResponse struct {
 	Introduction string
 }
 
-func (pb *PromptBuilder) CreatePromptsForResults(results []*Result, cleanSources map[string][]string, promptTemplate *SastResultPrompt) []*SastResultPrompt {
+func (pb *PromptBuilder) CreatePromptsForResults(results []*Result, cleanSources map[string]*SourceAndError, promptTemplate *SastResultPrompt) []*SastResultPrompt {
 	var prompts []*SastResultPrompt
 	for _, result := range results {
 		prompt := &SastResultPrompt{
@@ -107,10 +107,12 @@ func (pb *PromptBuilder) CreatePromptsForResults(results []*Result, cleanSources
 	return prompts
 }
 
-func copyCleanSources(sources map[string][]string) map[string][]string {
-	cleanSources := make(map[string][]string)
+func copyCleanSources(sources map[string]*SourceAndError) map[string]*SourceAndError {
+	cleanSources := make(map[string]*SourceAndError)
 	for k, v := range sources {
-		cleanSources[k] = append([]string(nil), v...)
+		source := make([]string, len(v.Source))
+		copy(source, v.Source)
+		cleanSources[k] = &SourceAndError{Source: source, Error: v.Error}
 	}
 	return cleanSources
 }
@@ -119,7 +121,7 @@ func GetSystemPrompt() string {
 	return systemPrompt
 }
 
-func (pb *PromptBuilder) CreateUserPrompt(result *Result, sources map[string][]string) (string, error) {
+func (pb *PromptBuilder) CreateUserPrompt(result *Result, sources map[string]*SourceAndError) (string, error) {
 	var promptSource string
 	var err error
 	if pb.NodeLinesOnly {
@@ -139,7 +141,7 @@ func (pb *PromptBuilder) CreateUserPrompt(result *Result, sources map[string][]s
 // createSourceForPromptWithNodeLinesOnly creates the comment-annotated source snippet for the SAST prompt.
 // It iterates over the nodes in the result and collects the source lines from the nodes and the method lines.
 // It annotates the lines with the node information.
-func createSourceForPromptWithNodeLinesOnly(result *Result, sources map[string][]string) (string, error) {
+func createSourceForPromptWithNodeLinesOnly(result *Result, sources map[string]*SourceAndError) (string, error) {
 	type NodeLine struct {
 		Index int
 		Line  int
@@ -154,13 +156,13 @@ func createSourceForPromptWithNodeLinesOnly(result *Result, sources map[string][
 	var sourcePrompt []string
 	for i, node := range result.Data.Nodes {
 		sourceFilename := strings.ReplaceAll(node.FileName, "\\", "/")
-		if sources[sourceFilename] == nil {
-			return "", fmt.Errorf("source '%s' is irrelevant for analysis", sourceFilename)
+		if sources[sourceFilename].Error != nil {
+			return "", fmt.Errorf("error reading source '%s': '%v'", sourceFilename, sources[sourceFilename].Error)
 		}
-		if node.MethodLine < 1 || node.MethodLine > len(sources[sourceFilename]) {
+		if node.MethodLine < 1 || node.MethodLine > len(sources[sourceFilename].Source) {
 			return "", fmt.Errorf("method line number %d is out of range", node.MethodLine)
 		}
-		if node.Line < 1 || node.Line > len(sources[sourceFilename]) {
+		if node.Line < 1 || node.Line > len(sources[sourceFilename].Source) {
 			return "", fmt.Errorf("node line number %d is out of range", node.Line)
 		}
 		methodSpec := MethodSpec{Filename: sourceFilename, Name: node.Method, Line: node.MethodLine}
@@ -175,7 +177,7 @@ func createSourceForPromptWithNodeLinesOnly(result *Result, sources map[string][
 		sort.Slice(lineNumbers, func(i, j int) bool {
 			return lineNumbers[i].Line < lineNumbers[j].Line
 		})
-		sourcePrompt = append(sourcePrompt, fmt.Sprintf("%s//FILE: %s:%d", sources[m.Filename][m.Line-1], m.Filename, m.Line))
+		sourcePrompt = append(sourcePrompt, fmt.Sprintf("%s//FILE: %s:%d", sources[m.Filename].Source[m.Line-1], m.Filename, m.Line))
 		for i := 0; i < len(lineNumbers); i++ {
 			index := lineNumbers[i].Index
 			line := lineNumbers[i].Line
@@ -205,7 +207,7 @@ func createSourceForPromptWithNodeLinesOnly(result *Result, sources map[string][
 					if line-m.Line > 1 {
 						sourcePrompt = append(sourcePrompt, "// ...")
 					}
-					sourcePrompt = append(sourcePrompt, sources[m.Filename][line-1]+
+					sourcePrompt = append(sourcePrompt, sources[m.Filename].Source[line-1]+
 						fmt.Sprintf("//SAST Node #%d%s: %s (%s)", index, edge, node.Name, nodeType))
 				} else {
 					sourcePrompt[len(sourcePrompt)-1] += fmt.Sprintf("//SAST Node #%d%s: %s (%s)", index, edge, node.Name, nodeType)
@@ -215,7 +217,7 @@ func createSourceForPromptWithNodeLinesOnly(result *Result, sources map[string][
 					if line-lineNumbers[i-1].Line > 1 {
 						sourcePrompt = append(sourcePrompt, "// ...")
 					}
-					sourcePrompt = append(sourcePrompt, sources[m.Filename][lineNumbers[i].Line-1]+
+					sourcePrompt = append(sourcePrompt, sources[m.Filename].Source[lineNumbers[i].Line-1]+
 						fmt.Sprintf("//SAST Node #%d%s: %s (%s)", index, edge, node.Name, nodeType))
 				} else {
 					sourcePrompt[len(sourcePrompt)-1] += fmt.Sprintf("//SAST Node #%d%s: %s (%s)", index, edge, node.Name, nodeType)
@@ -230,7 +232,7 @@ func createSourceForPromptWithNodeLinesOnly(result *Result, sources map[string][
 // createSourceForPrompt creates the comment-annotated source snippet for the SAST prompt.
 // It iterates over the nodes in the result, collects the source lines from the beginning of the method to the node line,
 // and annotates the lines with the node information. Whenever a new method is encountered, it fetches the method lines.
-func createSourceForPrompt(result *Result, sources map[string][]string) (string, error) {
+func createSourceForPrompt(result *Result, sources map[string]*SourceAndError) (string, error) {
 	var sourcePrompt []string
 	// methodsInPrompt collects the annotated source lines of all the methods
 	// the key is 'method-index:method-filename:method-name'
@@ -254,7 +256,7 @@ func createSourceForPrompt(result *Result, sources map[string][]string) (string,
 		if !exists { // first time this method is encountered in the result
 			m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], node.MethodLine, node.Line, false)
 			if err != nil {
-				return "", fmt.Errorf("error getting method %s: %v", node.Method, err)
+				return "", fmt.Errorf("error getting method '%s': %v", node.Method, err)
 			}
 			methodLines = m
 			methods[methodSpec] = &IndexAndLine{Index: methodCount, Line: node.MethodLine}
@@ -267,7 +269,7 @@ func createSourceForPrompt(result *Result, sources map[string][]string) (string,
 			if len(methodLines) < node.Line-methodIndex.Line+1 { // need to add more lines to the method
 				m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], methodIndex.Line, node.Line, true)
 				if err != nil {
-					return "", fmt.Errorf("error getting method %s: %v", node.Method, err)
+					return "", fmt.Errorf("error getting method '%s': %v", node.Method, err)
 				}
 				methodLines = m
 			}
@@ -315,7 +317,11 @@ func createSourceForPrompt(result *Result, sources map[string][]string) (string,
 	return strings.Join(sourcePrompt, "\n"), nil
 }
 
-func GetMethodByMethodLine(filename string, lines []string, methodLineNumber, nodeLineNumber int, tagged bool) ([]string, error) {
+func GetMethodByMethodLine(filename string, source *SourceAndError, methodLineNumber, nodeLineNumber int, tagged bool) ([]string, error) {
+	if source.Error != nil {
+		return nil, fmt.Errorf("error reading source '%s': %v", filename, source.Error)
+	}
+	lines := source.Source
 	if lines == nil {
 		return nil, fmt.Errorf("source '%s' is irrelevant for analysis", filename)
 	}
