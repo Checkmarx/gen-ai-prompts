@@ -49,12 +49,13 @@ Instructions for confidence score computation:
 3. The confidence score of a vulnerability with a vector starting with a stored input (like from files/db etc) cannot be more than 50.
 This is also known as a second-order vulnerability
 4. The confidence score of a vulnerability with a vector containing nodes in test code, cannot be more than 50 since it does not run in production. Test code is identified either by the file name containing the word 'test' or the file path containing the word 'test'. The same reasoning applies to file names or file paths containing the words 'demo', 'example', 'sample' or the like. These also do not run in production.
-5. Pay special attention to the input and output nodes and see if they match the expected input and output for the vulnerability found. If the actual input or output does not match the expected, the confidence score cannot be no more than 50. For example, writing to a log as the output of a Reflected XSS should get a very low score.
-6. If a node in the vulnerability vector is a sanitization node, the confidence score should be lower, even if the sanitization is not reliable.
-7. If the vulnerability vector is hard to read or follow because it is long or complex, the confidence score should be lower.
-8. If the vulnerability vector is hard reproduce is a test environment, the confidence score should be lower.
-9. If you don't find enough evidence about a vulnerability, just lower the score.
-10. If you are not sure, just lower the confidence - we don't want to have false positive results with a high confidence score.
+5. The confidence score of a vulnerability that outputs to a debug or trace log cannot be more than 50 since these logs are usually active only in development or test environments.
+6. Pay special attention to the input and output nodes and see if they match the expected input and output for the vulnerability found. If the actual input or output does not match the expected, the confidence score cannot be no more than 50. For example, writing to a log as the output of a Reflected XSS should get a very low score. 
+7. If a node in the vulnerability vector is a sanitization node, the confidence score should be low, even if the sanitization is not reliable.
+8. If the vulnerability vector is hard to read or follow because it is long or complex, the confidence score should be low.
+9. If the vulnerability vector is hard to reproduce in a test environment, the confidence score should be low.
+10. If you don't find enough evidence about a vulnerability, just lower the score.
+11. If you are not sure, just lower the confidence - we don't want to have false positive results with a high confidence score.
 
 Please provide a brief explanation for your confidence score, don't mention all the instruction above.
 
