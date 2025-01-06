@@ -10,9 +10,9 @@ Sending the prompt to the AI model will generate a remediation suggestion that i
 
 The form of the response is: 
 ```
-**CONFIDENCE**: [0-100]
+**CONFIDENCE** [0-100]
 
-**EXPLANATION**: [explanation of the confidence score]
+**EXPLANATION** [explanation of the confidence score]
 
-**PROPOSED REMEDIATION**: [code snippet]
+**PROPOSED REMEDIATION** [code snippet]
 ```
