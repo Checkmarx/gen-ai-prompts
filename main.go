@@ -14,6 +14,7 @@ const (
 	sastResultNodes string = "sast-result-nodes"
 	sastResultExtra string = "sast-result-extra"
 	promptTypes     string = sastResult + ", " + sastResultNodes + ", " + sastResultExtra
+	nodeLinesOnly          = true
 )
 
 const usage = `
@@ -38,7 +39,6 @@ var resultId string = ""
 var resultsListFile string = ""
 var query string = ""
 var language string = ""
-var nodeLinesOnly bool = false
 
 func main() {
 
@@ -80,7 +80,8 @@ func main() {
 	}
 
 	if promptType != sastResult &&
-		promptType != sastResultNodes {
+		promptType != sastResultNodes &&
+		promptType != sastResultExtra {
 		fmt.Printf("Invalid prompt type '%s'. Must be one of ['%s']\n", promptType, promptTypes)
 		os.Exit(1)
 	}
@@ -92,9 +93,9 @@ func buildPrompts(promptType string) {
 
 	switch promptType {
 	case sastResult, sastResultNodes:
-		buildSastResultPrompts(true)
+		buildSastResultPrompts(nodeLinesOnly)
 	case sastResultExtra:
-		buildSastResultPrompts(false)
+		buildSastResultPrompts(!nodeLinesOnly)
 	}
 }
 
