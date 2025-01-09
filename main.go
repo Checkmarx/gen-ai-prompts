@@ -30,6 +30,7 @@ Options:
     -rl, --result-list <listFile> result IDs file to remediate
     -q,  --query <language:query> Specify the query to use. Query must be in the format 'language:query'.
     -l,  --language <language>    Specify the language to use.
+    -sv, --severity <severity>    Specify the severity to use.
     -h,  --help                   Show help information.
 `
 
@@ -39,6 +40,7 @@ var resultId string = ""
 var resultsListFile string = ""
 var query string = ""
 var language string = ""
+var severity = ""
 
 func main() {
 
@@ -67,6 +69,9 @@ func main() {
 
 	flag.StringVar(&language, "l", "", "")
 	flag.StringVar(&language, "language", "", "")
+
+	flag.StringVar(&severity, "sv", "", "")
+	flag.StringVar(&severity, "severity", "", "")
 
 	flag.Usage = func() {
 		fmt.Print(usage)
@@ -133,6 +138,8 @@ func buildSastResultPrompts(nodeLinesOnly bool) {
 		buildPromptsForLanguageAndQuery(pb, language, query)
 	} else if language != "" {
 		buildPromptsForLanguageAndQuery(pb, language, "*")
+	} else if severity != "" {
+		buildPromptsForSeverity(pb, severity)
 	} else {
 		buildPromptsForLanguageAndQuery(pb, "*", "*")
 	}
@@ -174,6 +181,20 @@ func buildPromptsForResultList(pb *sastchat.PromptBuilder, resultsListFile strin
 		}
 		fmt.Printf("SAST Result Remediation Prompt for result ID '%s' from results list file '%s' in results file '%s' with sources '%s'\n\n",
 			prompt.ResultId, resultsListFile, prompt.ResultsFile, prompt.SourcePath)
+		fmt.Printf("System Prompt:\n\n%s\n\n", prompt.System)
+		fmt.Printf("User Prompt:\n\n%s\n\n", prompt.User)
+	}
+}
+
+func buildPromptsForSeverity(pb *sastchat.PromptBuilder, severity string) {
+	prompts := pb.BuildPromptsForSeverity(severity)
+	for _, prompt := range prompts {
+		if prompt.Error != nil {
+			fmt.Printf("Error building SAST result prompt for result ID '%s': %v\n", prompt.ResultId, prompt.Error)
+			continue
+		}
+		fmt.Printf("SAST Result Remediation Prompt for result ID '%s' with Severity '%s' Language '%s' and Query '%s' in results file '%s' with sources '%s'\n\n",
+			prompt.ResultId, prompt.Severity, prompt.Language, prompt.Query, prompt.ResultsFile, prompt.SourcePath)
 		fmt.Printf("System Prompt:\n\n%s\n\n", prompt.System)
 		fmt.Printf("User Prompt:\n\n%s\n\n", prompt.User)
 	}
