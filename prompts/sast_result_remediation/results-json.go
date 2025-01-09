@@ -147,17 +147,20 @@ func GetResultByID(results []*Result, resultID string) (*Result, error) {
 			return result, nil
 		}
 	}
-	return &Result{}, fmt.Errorf("result ID %s not found", resultID)
+	return nil, fmt.Errorf("result ID %s not found", resultID)
 }
 
-func GetResultsByList(results []*Result, resultsListFile string) ([]*Result, error) {
-	var resultsByList []*Result
-
+func GetResultsByListFile(results []*Result, resultsListFile string) ([]*Result, error) {
 	resultIds, err := ReadResultsList(resultsListFile)
 	if err != nil {
-		return resultsByList, fmt.Errorf("error reading results list file '%s': '%v'", resultsListFile, err)
+		return nil, fmt.Errorf("error reading results list file '%s': '%v'", resultsListFile, err)
 	}
 
+	return GetResultsByList(results, resultIds)
+}
+
+func GetResultsByList(results []*Result, resultIds []string) ([]*Result, error) {
+	var resultsByList []*Result
 	for _, resultId := range resultIds {
 		result, err := GetResultByID(results, resultId)
 		if err != nil {
@@ -166,6 +169,19 @@ func GetResultsByList(results []*Result, resultsListFile string) ([]*Result, err
 		resultsByList = append(resultsByList, result)
 	}
 	return resultsByList, nil
+}
+
+func GetResultsBySeverity(results []*Result, severity string) ([]*Result, error) {
+	var resultsBySeverity []*Result
+	for _, result := range results {
+		if strings.EqualFold(result.Severity, severity) {
+			resultsBySeverity = append(resultsBySeverity, result)
+		}
+	}
+	if len(resultsBySeverity) == 0 {
+		return nil, fmt.Errorf("no results found for severity '%s'", severity)
+	}
+	return resultsBySeverity, nil
 }
 
 func GetResultsForLanguageAndQuery(results []*Result, language, query string) ([]*Result, error) {

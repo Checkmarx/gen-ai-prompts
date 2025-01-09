@@ -325,7 +325,7 @@
             "similarityId": "-487407624",
             "status": "RECURRENT",
             "state": "TO_VERIFY",
-            "severity": "HIGH",
+            "severity": "LOW",
             "created": "2024-01-14T16:24:45Z",
             "firstFoundAt": "2023-11-24T10:27:23Z",
             "foundAt": "2024-01-14T16:24:45Z",
