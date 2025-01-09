@@ -82,6 +82,8 @@ IMPORTANT: pay special attention to the ANNOTATED LINES in the following code, t
 %s
 ` + code
 
+const errMsg = "error creating prompt for result ID '%s': '%v'"
+
 type ParsedResponse struct {
 	Confidence   int
 	Explanation  string
@@ -158,13 +160,16 @@ func createSourceForPromptWithNodeLinesOnly(result *Result, sources map[string]*
 	for i, node := range result.Data.Nodes {
 		sourceFilename := strings.ReplaceAll(node.FileName, "\\", "/")
 		if sources[sourceFilename].Error != nil {
-			return "", fmt.Errorf("error reading source '%s': '%v'", sourceFilename, sources[sourceFilename].Error)
+			e := fmt.Errorf("error reading source '%s': '%v'", sourceFilename, sources[sourceFilename].Error)
+			return "", fmt.Errorf(errMsg, result.ID, e)
 		}
 		if node.MethodLine < 1 || node.MethodLine > len(sources[sourceFilename].Source) {
-			return "", fmt.Errorf("method line number %d is out of range", node.MethodLine)
+			e := fmt.Errorf("method line number %d is out of range", node.MethodLine)
+			return "", fmt.Errorf(errMsg, result.ID, e)
 		}
 		if node.Line < 1 || node.Line > len(sources[sourceFilename].Source) {
-			return "", fmt.Errorf("node line number %d is out of range", node.Line)
+			e := fmt.Errorf("node line number %d is out of range", node.Line)
+			return "", fmt.Errorf(errMsg, result.ID, e)
 		}
 		methodSpec := MethodSpec{Filename: sourceFilename, Name: node.Method, Line: node.MethodLine}
 		if _, exists := nodesInMethods[methodSpec]; !exists {
@@ -257,7 +262,8 @@ func createSourceForPrompt(result *Result, sources map[string]*SourceAndError) (
 		if !exists { // first time this method is encountered in the result
 			m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], node.MethodLine, node.Line, false)
 			if err != nil {
-				return "", fmt.Errorf("error getting method '%s': %v", node.Method, err)
+				e := fmt.Errorf("error getting method '%s': '%v'", node.Method, err)
+				return "", fmt.Errorf(errMsg, result.ID, e)
 			}
 			methodLines = m
 			methods[methodSpec] = &IndexAndLine{Index: methodCount, Line: node.MethodLine}
@@ -270,7 +276,9 @@ func createSourceForPrompt(result *Result, sources map[string]*SourceAndError) (
 			if len(methodLines) < node.Line-methodIndex.Line+1 { // need to add more lines to the method
 				m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], methodIndex.Line, node.Line, true)
 				if err != nil {
-					return "", fmt.Errorf("error getting method '%s': %v", node.Method, err)
+					e := fmt.Errorf("error getting method '%s': '%v'", node.Method, err)
+					return "", fmt.Errorf(errMsg, result.ID, e)
+
 				}
 				methodLines = m
 			}

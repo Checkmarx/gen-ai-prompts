@@ -5,7 +5,13 @@ import (
 	"testing"
 )
 
-const userPromptCode = `  public AttackResult completed(@RequestParam String query) {//FILE: SqlInjectionLesson3.java:53//SAST Node #0 (input): query (ParamDecl)
+const (
+	resultsFile     = "testdata/cx_result.json"
+	sourcePath      = "testdata/sources"
+	resultsListFile = "testdata/results_list.txt"
+)
+
+const userPromptCodeSQLI = `  public AttackResult completed(@RequestParam String query) {//FILE: SqlInjectionLesson3.java:53//SAST Node #0 (input): query (ParamDecl)
     return injectableQuery(query);//SAST Node #1: query (StringReference)
 // method continues ...
   protected AttackResult injectableQuery(String query) {//FILE: SqlInjectionLesson3.java:57//SAST Node #2: query (ParamDecl)
@@ -25,7 +31,7 @@ const userPromptCodeNodeLinesOnly = `  public AttackResult completed(@RequestPar
         statement.executeUpdate(query);//SAST Node #3: query (StringReference)//SAST Node #4 (output): executeUpdate (MethodInvokeExpr)
 // ...`
 
-const userPromptCode2 = `  public AttackResult completed(@RequestParam String query) {//FILE: SqlInjectionLesson2.java:58//SAST Node #0 (input): query (ParamDecl)
+const userPromptCodeSQLI2 = `  public AttackResult completed(@RequestParam String query) {//FILE: SqlInjectionLesson2.java:58//SAST Node #0 (input): query (ParamDecl)
     return injectableQuery(query);//SAST Node #1: query (StringReference)
 // method continues ...
   protected AttackResult injectableQuery(String query) {//FILE: SqlInjectionLesson2.java:62//SAST Node #2: query (ParamDecl)
@@ -61,11 +67,11 @@ func TestBuildPrompt(t *testing.T) {
 		wantUser   string
 		wantErr    error
 	}{
-		{"TestBuildPromptHappy", args{"testdata/cx_result.json", "13588507", "testdata/sources"},
+		{"TestBuildPromptHappy", args{"testdata/cx_result.json", "13588507", sourcePath},
 			systemPrompt, userPrompt("SQL_Injection", 89, "Java", userPromptCodeNodeLinesOnly), nil},
-		{"TestBuildPromptFileNotFound", args{"invalidFile", "13588507", "testdata/sources"},
+		{"TestBuildPromptFileNotFound", args{"invalidFile", "13588507", sourcePath},
 			"", "", fmt.Errorf("error reading and parsing SAST results file 'invalidFile': 'open invalidFile: no such file or directory'")},
-		{"TestBuildPromptResultIdNotFound", args{"testdata/cx_result.json", "invalidResultId", "testdata/sources"},
+		{"TestBuildPromptResultIdNotFound", args{"testdata/cx_result.json", "invalidResultId", sourcePath},
 			"", "", fmt.Errorf("error getting result for result ID 'invalidResultId': 'result ID invalidResultId not found'")},
 		{"TestBuildPromptSourcesNotFound", args{"testdata/cx_result.json", "13588507", "invalidSources"},
 			systemPrompt, "", fmt.Errorf("error creating prompt for result ID '13588507': 'error reading source 'SqlInjectionLesson3.java': 'open invalidSources/SqlInjectionLesson3.java: no such file or directory''")},
@@ -101,14 +107,14 @@ func TestBuildPromptForResultIdNodeLinesOnly(t *testing.T) {
 		wantUser   string
 		wantErr    error
 	}{
-		{"TestBuildPromptForResultIdAllLinesHappy", args{"testdata/cx_result.json", "13588507", "testdata/sources"},
-			systemPrompt, userPrompt("SQL_Injection", 89, "Java", userPromptCode), nil},
-		{"TestBuildPromptForResultIdAllLinesFileNotFound", args{"invalidFile", "13588507", "testdata/sources"},
+		{"TestBuildPromptForResultIdAllLinesHappy", args{resultsFile, "13588507", sourcePath},
+			systemPrompt, userPrompt("SQL_Injection", 89, "Java", userPromptCodeSQLI), nil},
+		{"TestBuildPromptForResultIdAllLinesFileNotFound", args{"invalidFile", "13588507", sourcePath},
 			"", "", fmt.Errorf("error reading and parsing SAST results file 'invalidFile': 'open invalidFile: no such file or directory'")},
-		{"TestBuildPromptForResultIdAllLinesResultIdNotFound", args{"testdata/cx_result.json", "invalidResultId", "testdata/sources"},
+		{"TestBuildPromptForResultIdAllLinesResultIdNotFound", args{resultsFile, "invalidResultId", sourcePath},
 			"", "", fmt.Errorf("error getting result for result ID 'invalidResultId': 'result ID invalidResultId not found'")},
-		{"TestBuildPromptForResultIdAllLinesSourcesNotFound", args{"testdata/cx_result.json", "13588507", "invalidSources"},
-			systemPrompt, "", fmt.Errorf("error creating prompt for result ID '13588507': 'error getting method 'completed': error reading source 'SqlInjectionLesson3.java': open invalidSources/SqlInjectionLesson3.java: no such file or directory'")},
+		{"TestBuildPromptForResultIdAllLinesSourcesNotFound", args{resultsFile, "13588507", "invalidSources"},
+			systemPrompt, "", fmt.Errorf("error creating prompt for result ID '13588507': 'error getting method 'completed': 'error reading source 'SqlInjectionLesson3.java': open invalidSources/SqlInjectionLesson3.java: no such file or directory''")},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -133,12 +139,6 @@ func TestBuildPromptForResultIdNodeLinesOnly(t *testing.T) {
 	}
 }
 
-const (
-	resultsFile     = "testdata/cx_result.json"
-	sourcePath      = "testdata/sources"
-	resultsListFile = "testdata/results_list.txt"
-)
-
 func TestBuildPromptsForLanguageAndQuery(t *testing.T) {
 	type args struct {
 		resultsFile string
@@ -161,7 +161,7 @@ func TestBuildPromptsForLanguageAndQuery(t *testing.T) {
 					Language:    "Java",
 					Query:       "SQL_Injection",
 					System:      systemPrompt,
-					User:        userPrompt("SQL_Injection", 89, "Java", userPromptCode),
+					User:        userPrompt("SQL_Injection", 89, "Java", userPromptCodeSQLI),
 					Error:       nil,
 				},
 				{
@@ -170,7 +170,7 @@ func TestBuildPromptsForLanguageAndQuery(t *testing.T) {
 					Language:    "Java",
 					Query:       "SQL_Injection",
 					System:      systemPrompt,
-					User:        userPrompt("SQL_Injection", 89, "Java", userPromptCode2),
+					User:        userPrompt("SQL_Injection", 89, "Java", userPromptCodeSQLI2),
 					Error:       nil,
 				},
 			},
@@ -194,7 +194,7 @@ func TestBuildPromptsForLanguageAndQuery(t *testing.T) {
 					Query:       "Client_DOM_Open_Redirect",
 					System:      systemPrompt,
 					User:        "",
-					Error:       fmt.Errorf("error getting method 'Cxd39430bd': error reading source '/backbone-min.js': blacklisted extension: -min.js"),
+					Error:       fmt.Errorf("error creating prompt for result ID '13588372': 'error getting method 'Cxd39430bd': 'error reading source '/backbone-min.js': blacklisted extension: -min.js''"),
 				},
 			},
 		},
@@ -228,6 +228,111 @@ func TestBuildPromptsForLanguageAndQuery(t *testing.T) {
 	}
 }
 
+func TestBuildPromptsForSeverity(t *testing.T) {
+	type args struct {
+		resultsFile string
+		sourcePath  string
+		severity    string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []SastResultPrompt
+	}{
+		{"TestBuildPromptsForHigh",
+			args{resultsFile: resultsFile, sourcePath: sourcePath, severity: "high"},
+			[]SastResultPrompt{
+				{
+					ResultsFile: resultsFile,
+					SourcePath:  sourcePath,
+					Language:    "Java",
+					Query:       "SQL_Injection",
+					System:      systemPrompt,
+					User:        userPrompt("SQL_Injection", 89, "Java", userPromptCodeSQLI),
+					Error:       nil,
+				},
+				{
+					ResultsFile: resultsFile,
+					SourcePath:  sourcePath,
+					Language:    "Java",
+					Query:       "Client_DOM_Stored_XSS",
+					System:      systemPrompt,
+					User:        userPrompt("Client_DOM_Stored_XSS", 79, "JavaScript", userPromptCode3),
+					Error:       nil,
+				},
+			},
+		},
+		{"TestBuildPromptsForLow",
+			args{resultsFile: resultsFile, sourcePath: sourcePath, severity: "Low"},
+			[]SastResultPrompt{
+				{
+					ResultsFile: resultsFile,
+					SourcePath:  sourcePath,
+					Language:    "JavaScript",
+					Query:       "Client_DOM_Open_Redirect",
+					System:      systemPrompt,
+					User:        "",
+					Error:       fmt.Errorf("error creating prompt for result ID '13588372': 'error getting method 'Cxd39430bd': 'error reading source '/backbone-min.js': blacklisted extension: -min.js''"),
+				},
+				{
+					ResultsFile: resultsFile,
+					SourcePath:  sourcePath,
+					Language:    "Java",
+					Query:       "SQL_Injection",
+					System:      systemPrompt,
+					User:        userPrompt("SQL_Injection", 89, "Java", userPromptCodeSQLI2),
+					Error:       nil,
+				},
+			},
+		},
+		{"TestBuildPromptsForOther",
+			args{resultsFile: resultsFile, sourcePath: sourcePath, severity: "Junk"},
+			[]SastResultPrompt{
+				{
+					ResultsFile: resultsFile,
+					SourcePath:  sourcePath,
+					Language:    "",
+					Query:       "",
+					System:      "",
+					User:        "",
+					Error:       fmt.Errorf("error getting results for severity 'Junk': 'no results found for severity 'Junk''"),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pb := &PromptBuilder{
+				ResultsFile:   tt.args.resultsFile,
+				SourcePath:    tt.args.sourcePath,
+				NodeLinesOnly: false,
+			}
+			got := pb.BuildPromptsForSeverity(tt.args.severity)
+			if len(got) != len(tt.want) {
+				t.Errorf("BuildPromptsForSeverity() got = %v, want %v", got, tt.want)
+				return
+			}
+			for i := range got {
+				if got[i].Error != nil && tt.want[i].Error != nil && got[i].Error.Error() != tt.want[i].Error.Error() {
+					t.Errorf("BuildPromptsForSeverity() gotErr = \n%v\nwantErr \n%v\n", got[i].Error, tt.want[i].Error)
+					return
+				}
+				if (got[i].Error != nil && tt.want[i].Error == nil) || (got[i].Error == nil && tt.want[i].Error != nil) {
+					t.Errorf("BuildPromptsForSeverity() gotErr = \n%v\nwantErr \n%v\n", got[i].Error, tt.want[i].Error)
+					return
+				}
+
+				if got[i].System != tt.want[i].System {
+					t.Errorf("BuildPromptsForSeverity() gotSystem = \n%v\n, want \n%v\n", got[i].System, tt.want[i].System)
+				}
+				if got[i].User != tt.want[i].User {
+					t.Errorf("BuildPromptsForSeverity() gotUser = \n%v\n, want \n%v\n", got[i].User, tt.want[i].User)
+				}
+			}
+		})
+	}
+}
+
 func TestBuildPromptsForResultsList(t *testing.T) {
 	type args struct {
 		resultsFile     string
@@ -248,7 +353,7 @@ func TestBuildPromptsForResultsList(t *testing.T) {
 					Language:    "Java",
 					Query:       "SQL_Injection",
 					System:      systemPrompt,
-					User:        userPrompt("SQL_Injection", 89, "Java", userPromptCode),
+					User:        userPrompt("SQL_Injection", 89, "Java", userPromptCodeSQLI),
 					Error:       nil,
 				},
 				{
@@ -257,7 +362,7 @@ func TestBuildPromptsForResultsList(t *testing.T) {
 					Language:    "Java",
 					Query:       "SQL_Injection",
 					System:      systemPrompt,
-					User:        userPrompt("SQL_Injection", 89, "Java", userPromptCode2),
+					User:        userPrompt("SQL_Injection", 89, "Java", userPromptCodeSQLI2),
 					Error:       nil,
 				},
 			},
@@ -270,7 +375,7 @@ func TestBuildPromptsForResultsList(t *testing.T) {
 				SourcePath:    tt.args.sourcePath,
 				NodeLinesOnly: false,
 			}
-			got := pb.BuildPromptsForResultsList(tt.args.resultsListFile)
+			got := pb.BuildPromptsForResultsListFile(tt.args.resultsListFile)
 			if len(got) != len(tt.want) {
 				t.Errorf("BuildPromptsForLanguageAndQuery() got = %v, want %v", got, tt.want)
 				return
@@ -599,40 +704,40 @@ func TestBuildPromptForResults(t *testing.T) {
 		wantErr    error
 	}{
 		{"TestBuildPromptForResultMissingNode",
-			args{"testdata/sast_result_missing-node.json", "c1CrCRw4/3/A6q+6zwIhShQIe1I=", "testdata/sources", false},
+			args{"testdata/sast_result_missing-node.json", "c1CrCRw4/3/A6q+6zwIhShQIe1I=", sourcePath, false},
 			systemPrompt, userPrompt("Stored_XSS", 79, "Java", codeMissingNode), nil},
 		{"TestBuildPromptTwoSimilarResults1",
-			args{"testdata/two_similar_results.json", "13893625", "testdata/sources", false},
+			args{"testdata/two_similar_results.json", "13893625", sourcePath, false},
 			systemPrompt, userPrompt("Log_Forging", 117, "Java", codeTwoSimilarResults1), nil},
 		{"TestBuildPromptTwoSimilarResults2",
-			args{"testdata/two_similar_results.json", "13893626", "testdata/sources", false},
+			args{"testdata/two_similar_results.json", "13893626", sourcePath, false},
 			systemPrompt, userPrompt("Log_Forging", 117, "Java", codeTwoSimilarResults2), nil},
 		{"TestBuildPromptJspResult",
-			args{"testdata/jsp_result.json", "vuKUhCJ5drCeY6IDB//eBu8wvkk=", "testdata/sources", false},
+			args{"testdata/jsp_result.json", "vuKUhCJ5drCeY6IDB//eBu8wvkk=", sourcePath, false},
 			systemPrompt, userPrompt("LDAP_Injection", 90, "Java", jspCode), nil},
 		{"TestBuildPromptJspAndJavaResult",
-			args{"testdata/jsp_and_java_result.json", "XrM9Lk/bjJHxLOcn4XETGHJ1ko0=", "testdata/sources", false},
+			args{"testdata/jsp_and_java_result.json", "XrM9Lk/bjJHxLOcn4XETGHJ1ko0=", sourcePath, false},
 			systemPrompt, userPrompt("Reflected_XSS_All_Clients", 79, "Java", jspAndJavaCode), nil},
 		{"TestBuildPromptTwoMethodsWithSameName",
-			args{"testdata/two_methods_with_same_name.json", "5LcQqrUhDTZWEVCBWwMWGhSm+00=", "testdata/sources", false},
+			args{"testdata/two_methods_with_same_name.json", "5LcQqrUhDTZWEVCBWwMWGhSm+00=", sourcePath, false},
 			systemPrompt, userPrompt("Input_Path_Not_Canonicalized", 73, "Java", codeTwoMethodsWithSameName), nil},
 		{"TestBuildPromptForResultMissingNodeNLO",
-			args{"testdata/sast_result_missing-node.json", "c1CrCRw4/3/A6q+6zwIhShQIe1I=", "testdata/sources", true},
+			args{"testdata/sast_result_missing-node.json", "c1CrCRw4/3/A6q+6zwIhShQIe1I=", sourcePath, true},
 			systemPrompt, userPrompt("Stored_XSS", 79, "Java", codeMissingNodeNLO), nil},
 		{"TestBuildPromptTwoSimilarResults1NLO",
-			args{"testdata/two_similar_results.json", "13893625", "testdata/sources", true},
+			args{"testdata/two_similar_results.json", "13893625", sourcePath, true},
 			systemPrompt, userPrompt("Log_Forging", 117, "Java", codeTwoSimilarResults1NLO), nil},
 		{"TestBuildPromptTwoSimilarResults2NLO",
-			args{"testdata/two_similar_results.json", "13893626", "testdata/sources", true},
+			args{"testdata/two_similar_results.json", "13893626", sourcePath, true},
 			systemPrompt, userPrompt("Log_Forging", 117, "Java", codeTwoSimilarResults2NLO), nil},
 		{"TestBuildPromptJspResultNLO",
-			args{"testdata/jsp_result.json", "vuKUhCJ5drCeY6IDB//eBu8wvkk=", "testdata/sources", true},
+			args{"testdata/jsp_result.json", "vuKUhCJ5drCeY6IDB//eBu8wvkk=", sourcePath, true},
 			systemPrompt, userPrompt("LDAP_Injection", 90, "Java", jspCodeNLO), nil},
 		{"TestBuildPromptJspAndJavaResultNLO",
-			args{"testdata/jsp_and_java_result.json", "XrM9Lk/bjJHxLOcn4XETGHJ1ko0=", "testdata/sources", true},
+			args{"testdata/jsp_and_java_result.json", "XrM9Lk/bjJHxLOcn4XETGHJ1ko0=", sourcePath, true},
 			systemPrompt, userPrompt("Reflected_XSS_All_Clients", 79, "Java", jspAndJavaCodeNLO), nil},
 		{"TestBuildPromptTwoMethodsWithSameNameNLO",
-			args{"testdata/two_methods_with_same_name.json", "5LcQqrUhDTZWEVCBWwMWGhSm+00=", "testdata/sources", true},
+			args{"testdata/two_methods_with_same_name.json", "5LcQqrUhDTZWEVCBWwMWGhSm+00=", sourcePath, true},
 			systemPrompt, userPrompt("Input_Path_Not_Canonicalized", 73, "Java", codeTwoMethodsWithSameNameNLO), nil},
 	}
 	for _, tt := range tests {
