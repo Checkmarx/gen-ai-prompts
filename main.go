@@ -165,7 +165,7 @@ func buildPromptForResult(pb *sastchat.PromptBuilder, resultId string) {
 }
 
 func buildPromptsForResultList(pb *sastchat.PromptBuilder, resultsListFile string) {
-	prompts := pb.BuildPromptsForResultsList(resultsListFile)
+	prompts := pb.BuildPromptsForResultsListFile(resultsListFile)
 	for _, prompt := range prompts {
 		if prompt.Error != nil {
 			fmt.Printf("Error building SAST result prompt for result ID '%s': %v\n", prompt.ResultId, prompt.Error)
