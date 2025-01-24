@@ -3,10 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/Checkmarx/gen-ai-prompts/internal/service/scanresults"
+	"github.com/Checkmarx/gen-ai-prompts/internal/service/source"
+	"github.com/Checkmarx/gen-ai-prompts/pkg/model"
+	"github.com/Checkmarx/gen-ai-prompts/pkg/service/prompt"
 	"os"
 	"strings"
-
-	sastchat "github.com/Checkmarx/gen-ai-prompts/prompts/sast_result_remediation"
 )
 
 const (
@@ -34,12 +36,12 @@ Options:
     -h,  --help                   Show help information.
 `
 
-var sourcePath string = ""
-var resultsFile string = ""
-var resultId string = ""
-var resultsListFile string = ""
-var query string = ""
-var language string = ""
+var sourcePath = ""
+var resultsFile = ""
+var resultId = ""
+var resultsListFile = ""
+var query = ""
+var language = ""
 var severity = ""
 
 func main() {
@@ -116,12 +118,9 @@ func buildSastResultPrompts(nodeLinesOnly bool) {
 		fmt.Println("Source path is required for SAST result prompt")
 		os.Exit(1)
 	}
-
-	pb := &sastchat.PromptBuilder{
-		ResultsFile:   resultsFile,
-		SourcePath:    sourcePath,
-		NodeLinesOnly: nodeLinesOnly,
-	}
+	sr := scanresults.NewSastResultImpl()
+	sourcesHandler := source.NewSourceHandlerImpl(sourcePath)
+	pb := prompt.NewPromptBuilder(sr, sourcesHandler, resultsFile, sourcePath, nodeLinesOnly)
 
 	if resultId != "" {
 		buildPromptForResult(pb, resultId)
@@ -145,8 +144,8 @@ func buildSastResultPrompts(nodeLinesOnly bool) {
 	}
 }
 
-func buildPromptsForLanguageAndQuery(pb *sastchat.PromptBuilder, language, query string) {
-	var prompts []*sastchat.SastResultPrompt
+func buildPromptsForLanguageAndQuery(pb *prompt.PromptBuilder, language, query string) {
+	var prompts []*model.SastResultPrompt
 	prompts = pb.BuildPromptsForLanguageAndQuery(language, query)
 	for _, prompt := range prompts {
 		if prompt.Error != nil {
@@ -160,7 +159,7 @@ func buildPromptsForLanguageAndQuery(pb *sastchat.PromptBuilder, language, query
 	}
 }
 
-func buildPromptForResult(pb *sastchat.PromptBuilder, resultId string) {
+func buildPromptForResult(pb *prompt.PromptBuilder, resultId string) {
 	prompt := pb.BuildPromptForResultId(resultId)
 	if prompt.Error != nil {
 		fmt.Printf("Error building SAST result prompt for result ID '%s': %v\n", resultId, prompt.Error)
@@ -172,7 +171,7 @@ func buildPromptForResult(pb *sastchat.PromptBuilder, resultId string) {
 	fmt.Printf("User Prompt:\n\n%s\n\n", prompt.User)
 }
 
-func buildPromptsForResultList(pb *sastchat.PromptBuilder, resultsListFile string) {
+func buildPromptsForResultList(pb *prompt.PromptBuilder, resultsListFile string) {
 	prompts := pb.BuildPromptsForResultsListFile(resultsListFile)
 	for _, prompt := range prompts {
 		if prompt.Error != nil {
@@ -186,7 +185,7 @@ func buildPromptsForResultList(pb *sastchat.PromptBuilder, resultsListFile strin
 	}
 }
 
-func buildPromptsForSeverity(pb *sastchat.PromptBuilder, severity string) {
+func buildPromptsForSeverity(pb *prompt.PromptBuilder, severity string) {
 	prompts := pb.BuildPromptsForSeverity(severity)
 	for _, prompt := range prompts {
 		if prompt.Error != nil {
