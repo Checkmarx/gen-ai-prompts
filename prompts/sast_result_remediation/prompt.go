@@ -99,7 +99,7 @@ func (pb *PromptBuilder) CreatePromptsForResults(results []*Result, cleanSources
 			SourcePath:  promptTemplate.SourcePath,
 			Language:    result.Data.LanguageName,
 			Query:       result.Data.QueryName,
-			ResultId:    result.ID,
+			ResultId:    result.Data.ResultHash,
 			Severity:    result.Severity,
 		}
 		prompt.System = GetSystemPrompt()
