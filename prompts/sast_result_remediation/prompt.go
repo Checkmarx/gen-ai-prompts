@@ -99,7 +99,7 @@ func (pb *PromptBuilder) CreatePromptsForResults(results []*Result, cleanSources
 			SourcePath:  promptTemplate.SourcePath,
 			Language:    result.Data.LanguageName,
 			Query:       result.Data.QueryName,
-			ResultId:    result.ID,
+			ResultId:    result.Data.ResultHash,
 			Severity:    result.Severity,
 		}
 		prompt.System = GetSystemPrompt()
@@ -161,15 +161,15 @@ func createSourceForPromptWithNodeLinesOnly(result *Result, sources map[string]*
 		sourceFilename := strings.ReplaceAll(node.FileName, "\\", "/")
 		if sources[sourceFilename].Error != nil {
 			e := fmt.Errorf("error reading source '%s': '%v'", sourceFilename, sources[sourceFilename].Error)
-			return "", fmt.Errorf(errMsg, result.ID, e)
+			return "", fmt.Errorf(errMsg, result.Data.ResultHash, e)
 		}
 		if node.MethodLine < 1 || node.MethodLine > len(sources[sourceFilename].Source) {
 			e := fmt.Errorf("method line number %d is out of range", node.MethodLine)
-			return "", fmt.Errorf(errMsg, result.ID, e)
+			return "", fmt.Errorf(errMsg, result.Data.ResultHash, e)
 		}
 		if node.Line < 1 || node.Line > len(sources[sourceFilename].Source) {
 			e := fmt.Errorf("node line number %d is out of range", node.Line)
-			return "", fmt.Errorf(errMsg, result.ID, e)
+			return "", fmt.Errorf(errMsg, result.Data.ResultHash, e)
 		}
 		methodSpec := MethodSpec{Filename: sourceFilename, Name: node.Method, Line: node.MethodLine}
 		if _, exists := nodesInMethods[methodSpec]; !exists {
@@ -263,7 +263,7 @@ func createSourceForPrompt(result *Result, sources map[string]*SourceAndError) (
 			m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], node.MethodLine, node.Line, false)
 			if err != nil {
 				e := fmt.Errorf("error getting method '%s': '%v'", node.Method, err)
-				return "", fmt.Errorf(errMsg, result.ID, e)
+				return "", fmt.Errorf(errMsg, result.Data.ResultHash, e)
 			}
 			methodLines = m
 			methods[methodSpec] = &IndexAndLine{Index: methodCount, Line: node.MethodLine}
@@ -277,7 +277,7 @@ func createSourceForPrompt(result *Result, sources map[string]*SourceAndError) (
 				m, err := GetMethodByMethodLine(sourceFilename, sources[sourceFilename], methodIndex.Line, node.Line, true)
 				if err != nil {
 					e := fmt.Errorf("error getting method '%s': '%v'", node.Method, err)
-					return "", fmt.Errorf(errMsg, result.ID, e)
+					return "", fmt.Errorf(errMsg, result.Data.ResultHash, e)
 
 				}
 				methodLines = m

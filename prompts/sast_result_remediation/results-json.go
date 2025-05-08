@@ -143,7 +143,8 @@ func ReadResultsSAST(filename string) (*ScanResults, error) {
 
 func GetResultByID(results []*Result, resultID string) (*Result, error) {
 	for _, result := range results {
-		if result.ID == resultID {
+		if result.ID == resultID ||
+			result.Data.ResultHash == resultID {
 			return result, nil
 		}
 	}
