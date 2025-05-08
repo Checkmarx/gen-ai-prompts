@@ -178,14 +178,25 @@ func createSourceForPromptWithNodeLinesOnly(result *Result, sources map[string]*
 		}
 		nodesInMethods[methodSpec] = append(nodesInMethods[methodSpec], &NodeLine{Index: i, Line: node.Line})
 	}
+	index := 0
 	for _, m := range methods {
 		lineNumbers := nodesInMethods[m]
 		sort.Slice(lineNumbers, func(i, j int) bool {
 			return lineNumbers[i].Line < lineNumbers[j].Line
 		})
+		// for method definition lines, add 3 lines before the method definition to capture possible attributes describing an api endpoint
+		if m.Line > 1 {
+			precedingLine := max(m.Line-3, 0)
+			if index == 0 {
+				sourcePrompt = append(sourcePrompt, "// ...")
+			}
+			for j := precedingLine; j < m.Line; j++ {
+				sourcePrompt = append(sourcePrompt, fmt.Sprintf("%s", sources[m.Filename].Source[j-1]))
+			}
+		}
 		sourcePrompt = append(sourcePrompt, fmt.Sprintf("%s//FILE: %s:%d", sources[m.Filename].Source[m.Line-1], m.Filename, m.Line))
 		for i := 0; i < len(lineNumbers); i++ {
-			index := lineNumbers[i].Index
+			index = lineNumbers[i].Index
 			line := lineNumbers[i].Line
 			node := result.Data.Nodes[index]
 
