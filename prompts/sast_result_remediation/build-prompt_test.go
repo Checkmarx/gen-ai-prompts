@@ -23,9 +23,16 @@ const userPromptCodeSQLI = `  public AttackResult completed(@RequestParam String
         statement.executeUpdate(query);//SAST Node #3: query (StringReference)//SAST Node #4 (output): executeUpdate (MethodInvokeExpr)
 // method continues ...`
 
-const userPromptCodeNodeLinesOnly = `  public AttackResult completed(@RequestParam String query) {//FILE: SqlInjectionLesson3.java:53//SAST Node #0 (input): query (ParamDecl)
+const userPromptCodeNodeLinesOnly = `// ...
+
+  @PostMapping("/SqlInjection/attack3")
+  @ResponseBody
+  public AttackResult completed(@RequestParam String query) {//FILE: SqlInjectionLesson3.java:53//SAST Node #0 (input): query (ParamDecl)
     return injectableQuery(query);//SAST Node #1: query (StringReference)
 // ...
+    return injectableQuery(query);
+  }
+
   protected AttackResult injectableQuery(String query) {//FILE: SqlInjectionLesson3.java:57//SAST Node #2: query (ParamDecl)
 // ...
         statement.executeUpdate(query);//SAST Node #3: query (StringReference)//SAST Node #4 (output): executeUpdate (MethodInvokeExpr)
@@ -67,14 +74,14 @@ func TestBuildPrompt(t *testing.T) {
 		wantUser   string
 		wantErr    error
 	}{
-		{"TestBuildPromptHappy", args{"testdata/cx_result.json", "13588507", sourcePath},
+		{"TestBuildPromptHappy", args{"testdata/cx_result.json", "VcSBJ28P72Dk9jMD+n8RHSZ2O74=", sourcePath},
 			systemPrompt, userPrompt("SQL_Injection", 89, "Java", userPromptCodeNodeLinesOnly), nil},
-		{"TestBuildPromptFileNotFound", args{"invalidFile", "13588507", sourcePath},
+		{"TestBuildPromptFileNotFound", args{"invalidFile", "VcSBJ28P72Dk9jMD+n8RHSZ2O74=", sourcePath},
 			"", "", fmt.Errorf("error reading and parsing SAST results file 'invalidFile': 'open invalidFile: no such file or directory'")},
 		{"TestBuildPromptResultIdNotFound", args{"testdata/cx_result.json", "invalidResultId", sourcePath},
 			"", "", fmt.Errorf("error getting result for result ID 'invalidResultId': 'result ID invalidResultId not found'")},
-		{"TestBuildPromptSourcesNotFound", args{"testdata/cx_result.json", "13588507", "invalidSources"},
-			systemPrompt, "", fmt.Errorf("error creating prompt for result ID '13588507': 'error reading source 'SqlInjectionLesson3.java': 'open invalidSources/SqlInjectionLesson3.java: no such file or directory''")},
+		{"TestBuildPromptSourcesNotFound", args{"testdata/cx_result.json", "VcSBJ28P72Dk9jMD+n8RHSZ2O74=", "invalidSources"},
+			systemPrompt, "", fmt.Errorf("error creating prompt for result ID 'VcSBJ28P72Dk9jMD+n8RHSZ2O74=': 'error reading source 'SqlInjectionLesson3.java': 'open invalidSources/SqlInjectionLesson3.java: no such file or directory''")},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -107,14 +114,14 @@ func TestBuildPromptForResultIdNodeLinesOnly(t *testing.T) {
 		wantUser   string
 		wantErr    error
 	}{
-		{"TestBuildPromptForResultIdAllLinesHappy", args{resultsFile, "13588507", sourcePath},
+		{"TestBuildPromptForResultIdAllLinesHappy", args{resultsFile, "VcSBJ28P72Dk9jMD+n8RHSZ2O74=", sourcePath},
 			systemPrompt, userPrompt("SQL_Injection", 89, "Java", userPromptCodeSQLI), nil},
-		{"TestBuildPromptForResultIdAllLinesFileNotFound", args{"invalidFile", "13588507", sourcePath},
+		{"TestBuildPromptForResultIdAllLinesFileNotFound", args{"invalidFile", "VcSBJ28P72Dk9jMD+n8RHSZ2O74=", sourcePath},
 			"", "", fmt.Errorf("error reading and parsing SAST results file 'invalidFile': 'open invalidFile: no such file or directory'")},
 		{"TestBuildPromptForResultIdAllLinesResultIdNotFound", args{resultsFile, "invalidResultId", sourcePath},
 			"", "", fmt.Errorf("error getting result for result ID 'invalidResultId': 'result ID invalidResultId not found'")},
-		{"TestBuildPromptForResultIdAllLinesSourcesNotFound", args{resultsFile, "13588507", "invalidSources"},
-			systemPrompt, "", fmt.Errorf("error creating prompt for result ID '13588507': 'error getting method 'completed': 'error reading source 'SqlInjectionLesson3.java': open invalidSources/SqlInjectionLesson3.java: no such file or directory''")},
+		{"TestBuildPromptForResultIdAllLinesSourcesNotFound", args{resultsFile, "VcSBJ28P72Dk9jMD+n8RHSZ2O74=", "invalidSources"},
+			systemPrompt, "", fmt.Errorf("error creating prompt for result ID 'VcSBJ28P72Dk9jMD+n8RHSZ2O74=': 'error getting method 'completed': 'error reading source 'SqlInjectionLesson3.java': open invalidSources/SqlInjectionLesson3.java: no such file or directory''")},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -194,7 +201,7 @@ func TestBuildPromptsForLanguageAndQuery(t *testing.T) {
 					Query:       "Client_DOM_Open_Redirect",
 					System:      systemPrompt,
 					User:        "",
-					Error:       fmt.Errorf("error creating prompt for result ID '13588372': 'error getting method 'Cxd39430bd': 'error reading source '/backbone-min.js': blacklisted extension: -min.js''"),
+					Error:       fmt.Errorf("error creating prompt for result ID 'iaRsNnT3+ZEDbS8t1rhZlX2x7Lw=': 'error getting method 'Cxd39430bd': 'error reading source '/backbone-min.js': blacklisted extension: -min.js''"),
 				},
 			},
 		},
@@ -272,7 +279,7 @@ func TestBuildPromptsForSeverity(t *testing.T) {
 					Query:       "Client_DOM_Open_Redirect",
 					System:      systemPrompt,
 					User:        "",
-					Error:       fmt.Errorf("error creating prompt for result ID '13588372': 'error getting method 'Cxd39430bd': 'error reading source '/backbone-min.js': blacklisted extension: -min.js''"),
+					Error:       fmt.Errorf("error creating prompt for result ID 'iaRsNnT3+ZEDbS8t1rhZlX2x7Lw=': 'error getting method 'Cxd39430bd': 'error reading source '/backbone-min.js': blacklisted extension: -min.js''"),
 				},
 				{
 					ResultsFile: resultsFile,
@@ -476,14 +483,25 @@ const codeMissingNode = `    public String getRealPath(String path) {//FILE: Jsp
                         request.getPathTranslated());//SAST Node #2: getPathTranslated (MethodInvokeExpr)
 // method continues ...`
 
-const codeMissingNodeNLO = `    public String getRealPath(String path) {//FILE: JspCServletContext.java:296
+const codeMissingNodeNLO = `// ...
+
+
+    @Override
+    public String getRealPath(String path) {//FILE: JspCServletContext.java:296
 // ...
             return f.getAbsolutePath();//SAST Node #0 (input): getAbsolutePath (MethodInvokeExpr)
 // ...
+// ...
+     * Override the <code>getPathTranslated()</code> method of the wrapped request.
+     */
+    @Override
     public String getPathTranslated() {//FILE: ApplicationHttpRequest.java:450
 // ...
         return getServletContext().getRealPath(getPathInfo());//SAST Node #1: getRealPath (MethodInvokeExpr)
 // ...
+        private static final long serialVersionUID = 1L;
+
+        @Override
         public void service(HttpServletRequest request,//FILE: TomcatBaseTest.java:450
 // ...
             out.println("REQUEST-PATH-TRANSLATED: " +//SAST Node #3 (output): println (MethodInvokeExpr)
@@ -496,7 +514,11 @@ const codeTwoSimilarResults1 = `  public String logRequest(//FILE: Ping.java:47
     log.debug(logLine);//SAST Node #4: logLine (StringReference)//SAST Node #5 (output): debug (MethodInvokeExpr)
 // method continues ...`
 
-const codeTwoSimilarResults1NLO = `  public String logRequest(//FILE: Ping.java:47
+const codeTwoSimilarResults1NLO = `// ...
+
+  @GetMapping
+  @ResponseBody
+  public String logRequest(//FILE: Ping.java:47
       @RequestHeader("User-Agent") String userAgent, @RequestParam(required = false) String text) {//SAST Node #0 (input): text (ParamDecl)
     String logLine = String.format("%s %s %s", "GET", userAgent, text);//SAST Node #1: text (StringReference)//SAST Node #2: format (MethodInvokeExpr)//SAST Node #3: logLine (Declarator)
     log.debug(logLine);//SAST Node #4: logLine (StringReference)//SAST Node #5 (output): debug (MethodInvokeExpr)
@@ -508,7 +530,11 @@ const codeTwoSimilarResults2 = `  public String logRequest(//FILE: Ping.java:47
     log.debug(logLine);//SAST Node #4: logLine (StringReference)//SAST Node #5 (output): debug (MethodInvokeExpr)
 // method continues ...`
 
-const codeTwoSimilarResults2NLO = `  public String logRequest(//FILE: Ping.java:47
+const codeTwoSimilarResults2NLO = `// ...
+
+  @GetMapping
+  @ResponseBody
+  public String logRequest(//FILE: Ping.java:47
       @RequestHeader("User-Agent") String userAgent, @RequestParam(required = false) String text) {//SAST Node #0 (input): userAgent (ParamDecl)
     String logLine = String.format("%s %s %s", "GET", userAgent, text);//SAST Node #1: userAgent (StringReference)//SAST Node #2: format (MethodInvokeExpr)//SAST Node #3: logLine (Declarator)
     log.debug(logLine);//SAST Node #4: logLine (StringReference)//SAST Node #5 (output): debug (MethodInvokeExpr)
@@ -519,8 +545,15 @@ const jspCode = `    String jndiName = request.getParameter("jndiName");//FILE: 
         Object obj = envCtx.lookup(jndiName);//FILE: jndi.jsp:24//SAST Node #3: jndiName (StringReference)//SAST Node #4 (output): lookup (MethodInvokeExpr)
 // method continues ...`
 
-const jspCodeNLO = `    String jndiName = request.getParameter("jndiName");//FILE: jndi.jsp:18//SAST Node #0 (input): &#34;&#34;jndiName&#34;&#34; (StringLiteral)//SAST Node #1: getParameter (MethodInvokeExpr)//SAST Node #2: jndiName (Declarator)
+const jspCodeNLO = `// ...
+  limitations under the License.
+--%>
+<%@page contentType="text/plain" pageEncoding="UTF-8"%><%
+    String jndiName = request.getParameter("jndiName");//FILE: jndi.jsp:18//SAST Node #0 (input): &#34;&#34;jndiName&#34;&#34; (StringLiteral)//SAST Node #1: getParameter (MethodInvokeExpr)//SAST Node #2: jndiName (Declarator)
 // ...
+    javax.naming.Context envCtx = (javax.naming.Context) initCtx.lookup("java:comp/env");
+
+    try {
         Object obj = envCtx.lookup(jndiName);//FILE: jndi.jsp:24//SAST Node #3: jndiName (StringReference)//SAST Node #4 (output): lookup (MethodInvokeExpr)
 // ...`
 
@@ -536,14 +569,30 @@ const jspAndJavaCode = `<jsp:setProperty name="numguess" property="*"/>//FILE: n
         return "" + hint;//SAST Node #6: hint (StringReference)
 // method continues ...`
 
-const jspAndJavaCodeNLO = `<jsp:setProperty name="numguess" property="*"/>//FILE: numguess.jsp:25//SAST Node #0 (input): getParameterMap (MethodInvokeExpr)//SAST Node #1: set (MethodInvokeExpr)//SAST Node #2: numguess (NumberGuessBeanReference)
+const jspAndJavaCodeNLO = `// ...
+<%@ page import = "num.NumberGuessBean" %>
+
+<jsp:useBean id="numguess" class="num.NumberGuessBean" scope="session"/>
+<jsp:setProperty name="numguess" property="*"/>//FILE: numguess.jsp:25//SAST Node #0 (input): getParameterMap (MethodInvokeExpr)//SAST Node #1: set (MethodInvokeExpr)//SAST Node #2: numguess (NumberGuessBeanReference)
 // ...
+<body bgcolor="white">
+<font size=4>
+
 <% if (numguess.getSuccess()) { %>//FILE: numguess.jsp:32//SAST Node #3: numguess (NumberGuessBeanReference)
 // ...
+
+  Care to <a href="numguess.jsp">try again</a>?
+
 <% } else if (numguess.getNumGuesses() == 0) { %>//FILE: numguess.jsp:41//SAST Node #4: numguess (NumberGuessBeanReference)
 // ...
+
+<% } else { %>
+
   Good guess, but nope.  Try <b><%= numguess.getHint() %></b>.//FILE: numguess.jsp:54//SAST Node #5: numguess (NumberGuessBeanReference)//SAST Node #7 (output): getHint (MethodInvokeExpr)
 // ...
+        this.answer = answer;
+    }
+
     public String getHint() {//FILE: NumberGuessBean.java:48
         return "" + hint;//SAST Node #6: hint (StringReference)
 // ...`
@@ -657,10 +706,17 @@ const codeTwoMethodsWithSameName = `    void parseParameters() {//FILE: Applicat
             configBase = new File(configBase, hostName);//SAST Node #17: hostName (StringReference)//SAST Node #18 (output): File (ObjectCreateExpr)
 // method continues ...`
 
-const codeTwoMethodsWithSameNameNLO = `    void parseParameters() {//FILE: ApplicationHttpRequest.java:710
+const codeTwoMethodsWithSameNameNLO = `// ...
+     * Parses the parameters of this request. If parameters are present in both the query string and the request
+     * content, they are merged.
+     */
+    void parseParameters() {//FILE: ApplicationHttpRequest.java:710
 // ...
         parameters = new ParameterMap<>(getRequest().getParameterMap());//SAST Node #0 (input): getParameterMap (MethodInvokeExpr)//SAST Node #1: ParameterMap (ObjectCreateExpr)//SAST Node #2: parameters (MapReference)
 // ...
+     * @param name Name of the requested parameter
+     */
+    @Override
     public String getParameter(String name) {//FILE: ApplicationHttpRequest.java:394
         parseParameters();//SAST Node #3: parseParameters (MethodInvokeExpr)
 // ...
@@ -668,22 +724,34 @@ const codeTwoMethodsWithSameNameNLO = `    void parseParameters() {//FILE: Appli
 // ...
         return value[0];//SAST Node #7: value (StringReference)
 // ...
+
+
+    @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {//FILE: HostManagerServlet.java:163
 // ...
         String name = request.getParameter("name");//SAST Node #8: getParameter (MethodInvokeExpr)//SAST Node #9: name (Declarator)
 // ...
             add(request, writer, name, false, smClient);//SAST Node #10: name (StringReference)
 // ...
+     * @param htmlMode Flag value
+     * @param smClient StringManager for the client's locale
+     */
     protected void add(HttpServletRequest request, PrintWriter writer, String name, boolean htmlMode,//FILE: HostManagerServlet.java:216//SAST Node #11: name (ParamDecl)
 // ...
         add(writer, name, aliases, appBase, manager, autoDeploy, deployOnStartup, deployXML, unpackWARs, copyXML,//SAST Node #12: name (StringReference)
 // ...
+     * @param copyXML         Flag value
+     * @param smClient        StringManager for the client's locale
+     */
     protected synchronized void add(PrintWriter writer, String name, String aliases, String appBase, boolean manager,//FILE: HostManagerServlet.java:302//SAST Node #13: name (ParamDecl)
 // ...
         if (name == null || name.length() == 0) {//SAST Node #14: name (StringReference)
 // ...
         File configBaseFile = getConfigBase(name);//SAST Node #15: name (StringReference)
 // ...
+     *
+     * @return the config base for the host
+     */
     protected File getConfigBase(String hostName) {//FILE: HostManagerServlet.java:622//SAST Node #16: hostName (ParamDecl)
 // ...
             configBase = new File(configBase, hostName);//SAST Node #17: hostName (StringReference)//SAST Node #18 (output): File (ObjectCreateExpr)
