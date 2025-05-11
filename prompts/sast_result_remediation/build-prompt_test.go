@@ -757,6 +757,12 @@ const codeTwoMethodsWithSameNameNLO = `// ...
             configBase = new File(configBase, hostName);//SAST Node #17: hostName (StringReference)//SAST Node #18 (output): File (ObjectCreateExpr)
 // ...`
 
+const codeWithPrecedingLines = `// ...
+{
+  "ConnectionStrings": {
+    "CatalogConnection": "Server=sqlserver,1433;Integrated Security=true;Initial Catalog=Microsoft.eShopOnWeb.CatalogDb;User Id=sa;Password=@someThingComplicated1234;Trusted_Connection=false;TrustServerCertificate=true;",//FILE: /appsettings.Docker.json:3//SAST Node #0 (input): Password (Comment)
+// ...`
+
 func TestBuildPromptForResults(t *testing.T) {
 	type args struct {
 		resultsFile   string
@@ -807,6 +813,9 @@ func TestBuildPromptForResults(t *testing.T) {
 		{"TestBuildPromptTwoMethodsWithSameNameNLO",
 			args{"testdata/two_methods_with_same_name.json", "5LcQqrUhDTZWEVCBWwMWGhSm+00=", sourcePath, true},
 			systemPrompt, userPrompt("Input_Path_Not_Canonicalized", 73, "Java", codeTwoMethodsWithSameNameNLO), nil},
+		{"TestBuildPromptWithPrecedingLines",
+			args{"testdata/precedingLines.json", "/XlXpksYun7sP8jZjGpRcP/Z5mA=", sourcePath, true},
+			systemPrompt, userPrompt("Password_in_Configuration_File", 260, "CSharp", codeWithPrecedingLines), nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
