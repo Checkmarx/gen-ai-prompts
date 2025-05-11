@@ -1,0 +1,61 @@
+{
+    "results": [
+       {
+            "type": "sast",
+            "label": "sast",
+            "id": "/XlXpksYun7sP8jZjGpRcP/Z5mA=",
+            "similarityId": "-1393948400",
+            "status": "NEW",
+            "state": "TO_VERIFY",
+            "severity": "LOW",
+            "created": "2025-05-11T13:56:56Z",
+            "firstFoundAt": "2025-05-11T13:56:55Z",
+            "foundAt": "2025-05-11T13:56:56Z",
+            "firstScanId": "7ea262f0-a4ef-4b9e-83ce-e05b2224ebee",
+            "description": "The configuration file /eShopOnWeb-main/src/PublicApi/appsettings.Docker.json contains a hardcoded password in line 3\n\n",
+            "descriptionHTML": "\u003cp\u003eThe configuration file /eShopOnWeb-main/src/PublicApi/appsettings.Docker.json contains a hardcoded password in line 3\u003c/p\u003e\n",
+            "data": {
+                "queryId": 11242312610284871690,
+                "queryName": "Password_in_Configuration_File",
+                "group": "CSharp_WebConfig",
+                "resultHash": "/XlXpksYun7sP8jZjGpRcP/Z5mA=",
+                "languageName": "CSharp",
+                "nodes": [
+                    {
+                        "id": "bDjuK5z/5mUHIek/3cjo0lOr4Hs=",
+                        "line": 3,
+                        "name": "Password",
+                        "column": 132,
+                        "length": 8,
+                        "nodeID": 164638,
+                        "domType": "Comment",
+                        "fileName": "/appsettings.Docker.json",
+                        "fullName": "Password",
+                        "methodLine": 3,
+                        "definitions": "-1"
+                    }
+                ]
+            },
+            "comments": {},
+            "vulnerabilityDetails": {
+                "cweId": 260,
+                "cvss": {},
+                "compliances": [
+                    "FISMA 2014",
+                    "OWASP Top 10 2021",
+                    "OWASP Top 10 API",
+                    "PCI DSS v4.0",
+                    "ASA Premium",
+                    "ASD STIG 6.1",
+                    "OWASP ASVS",
+                    "OWASP Top 10 2013",
+                    "NIST SP 800-53",
+                    "OWASP Top 10 2017",
+                    "PCI DSS v3.2.1"
+                ]
+            }
+        }
+    ],
+    "totalCount": 7,
+    "scanID": "7ea262f0-a4ef-4b9e-83ce-e05b2224ebee"
+}

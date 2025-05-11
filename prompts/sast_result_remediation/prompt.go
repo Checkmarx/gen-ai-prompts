@@ -186,7 +186,7 @@ func createSourceForPromptWithNodeLinesOnly(result *Result, sources map[string]*
 		})
 		// for method definition lines, add 3 lines before the method definition to capture possible attributes describing an api endpoint
 		if m.Line > 1 {
-			precedingLine := max(m.Line-3, 0)
+			precedingLine := max(m.Line-3, 1)
 			if index == 0 {
 				sourcePrompt = append(sourcePrompt, "// ...")
 			}
